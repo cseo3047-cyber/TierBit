@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TierBit — 출석 체크</title>
+<style>
+  :root {
+    --bg:#0a1620; --panel:#10231c; --panel2:#0d2733; --border:#1c3a33;
+    --text:#e8f4f8; --muted:#9db8a9; --dim:#5a737d;
+    --gold:#f0c948; --gold-dim:#c9a832; --up:#4cd7a5; --down:#f0645a;
+  }
+  * { margin:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",-apple-system,sans-serif; font-size:14px; }
+  a { color:inherit; text-decoration:none; }
+  .num { font-variant-numeric:tabular-nums; }
+  .nav { display:flex; align-items:center; gap:14px; padding:13px 22px; border-bottom:1px solid var(--border); background:#0a1a22; position:sticky; top:0; z-index:100; }
+  .brand { display:flex; align-items:center; gap:9px; font-size:20px; font-weight:800; letter-spacing:.3px; }
+  .brand .mark { display:flex; align-items:flex-end; gap:2px; height:20px; }
+  .brand .mark i { display:block; width:5px; border-radius:2px; background:var(--gold); }
+  .brand .mark i:nth-child(1){height:10px;background:var(--up);} .brand .mark i:nth-child(2){height:16px;} .brand .mark i:nth-child(3){height:13px;background:var(--up);}
+  .nlink { font-size:13px; font-weight:700; color:var(--muted); padding:6px 10px; border-radius:8px; }
+  .nlink:hover { color:var(--text); background:#ffffff0d; }
+  .nlink.on { color:var(--gold); }
+  #loginbtn { margin-left:auto; background:transparent; border:1px solid var(--border); color:var(--muted); border-radius:9px; padding:7px 15px; font-size:12px; font-weight:800; cursor:pointer; }
+  .wrap { max-width:1220px; margin:0 auto; padding:22px 18px 30px; }
+  .page-title { font-size:26px; font-weight:800; margin-bottom:6px; }
+  .page-sub { font-size:13px; color:var(--muted); margin-bottom:18px; line-height:1.7; }
+  .card { background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:18px 20px; min-width:0; }
+  .card h3 { font-size:15px; font-weight:800; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+  .card h3 .more { margin-left:auto; font-size:11px; color:var(--dim); font-weight:700; }
+  .layout { display:grid; grid-template-columns:1fr 400px; gap:14px; align-items:stretch; }
+  @media (max-width:1000px){ .layout { grid-template-columns:1fr; } }
+  .statgrid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:14px; }
+  @media (max-width:900px){ .statgrid { grid-template-columns:repeat(2,1fr); } }
+  .sbox2 { background:linear-gradient(135deg,#0d2e3b,#123f4b); border:1px solid var(--border); border-radius:14px; padding:14px 16px; display:flex; align-items:center; gap:12px; }
+  .sbox2 .ic { width:46px; height:46px; border-radius:13px; display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; background:rgba(255,255,255,.06); }
+  .sbox2 .lb { font-size:11.5px; color:var(--muted); font-weight:700; }
+  .sbox2 .vl { font-size:21px; font-weight:800; margin-top:3px; line-height:1.2; }
+  .sbox2 .sub { font-size:10.5px; color:var(--dim); margin-top:3px; }
+  .pbar { height:6px; border-radius:4px; background:#0d3a52; overflow:hidden; margin-top:7px; }
+  .pbar i { display:block; height:100%; border-radius:4px; background:linear-gradient(90deg,#c9611d,#f0c948); }
+  .pbar i.grn { background:linear-gradient(90deg,#0f7a56,#4cd7a5); }
+  .cal { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-top:12px; }
+  .cal .wd { text-align:center; font-size:10.5px; color:var(--dim); font-weight:700; padding-bottom:4px; }
+  .cal .d { aspect-ratio:1; border-radius:9px; background:var(--panel2); border:1px solid var(--border); display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:11px; color:var(--muted); font-variant-numeric:tabular-nums; gap:1px; }
+  .cal .d.on { background:linear-gradient(135deg,#13322a,#1d4a3a); border-color:#2e5c47; color:#4cd7a5; font-weight:800; }
+  .cal .d.today { border-color:var(--gold); border-width:1.5px; }
+  .cal .d.dim { opacity:.35; }
+  .cal .d small { font-size:8px; color:var(--dim); font-weight:700; }
+  .mnav { display:flex; align-items:center; justify-content:center; gap:16px; font-size:14.5px; font-weight:800; }
+  .mnav span.ar { cursor:pointer; color:var(--muted); padding:2px 8px; border-radius:7px; }
+  .mnav span.ar:hover { background:var(--panel2); }
+  .tline { display:flex; align-items:flex-start; justify-content:space-between; padding:8px 2px 0; }
+  .tdot { display:flex; flex-direction:column; align-items:center; gap:5px; flex:1; position:relative; }
+  .tdot .c { width:22px; height:22px; border-radius:50%; background:var(--panel2); border:1.5px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--dim); z-index:1; }
+  .tdot .c.on { background:linear-gradient(135deg,#1d9e75,#0f7a56); border-color:#2e5c47; color:#fff; }
+  .tdot .c.today { background:linear-gradient(135deg,#f0c948,#c9611d); border-color:var(--gold); color:#5c3300; }
+  .tdot::after { content:""; position:absolute; top:11px; left:50%; width:100%; height:1.5px; background:var(--border); }
+  .tdot:last-child::after { display:none; }
+  .tdot b { font-size:9.5px; color:var(--dim); font-weight:700; text-align:center; }
+  .benrow { display:flex; gap:11px; padding:9px 0; border-bottom:1px solid #ffffff0d; align-items:flex-start; }
+  .benrow:last-child { border-bottom:none; }
+  .benrow .bic { width:32px; height:32px; border-radius:9px; background:#3d3313; border:1px solid #c9a83244; display:flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0; }
+  .badge3 { display:flex; align-items:center; gap:10px; padding:9px 0; border-bottom:1px solid #ffffff0d; }
+  .badge3:last-child { border-bottom:none; }
+  .rkrow { display:flex; align-items:center; gap:9px; padding:8px 6px; border-bottom:1px solid #ffffff0d; font-size:12.5px; font-weight:700; }
+  .rkrow:last-child { border-bottom:none; }
+  .rkrow .rank { width:20px; height:20px; border-radius:6px; background:var(--panel2); border:1px solid var(--border); color:var(--muted); font-size:11px; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .rkrow.me { background:#3d331322; border-radius:8px; }
+  .footer { max-width:1220px; margin:18px auto 0; padding:15px 18px 26px; font-size:11.5px; color:var(--muted); border-top:1px solid var(--border); line-height:2.0; text-align:center; }
+  .modal { position:fixed; inset:0; background:#000000aa; display:none; align-items:center; justify-content:center; z-index:300; }
+  .modal .pn { background:var(--panel); border:1px solid var(--border); border-radius:16px; width:min(360px,92vw); max-height:82vh; overflow:auto; padding:24px; }
+</style>
+</head>
+<body>
+<nav class="nav">
+  <a class="brand" href="index.html"><span class="mark"><i></i><i></i><i></i></span>TierBit</a>
+  <a class="nlink" href="index.html">홈</a>
+  <a class="nlink" href="chart.html">차트</a>
+  <a class="nlink" href="predict.html">예측게임</a>
+  <a class="nlink on" href="attend.html">출석체크</a>
+  <button id="loginbtn">로그인</button>
+</nav>
+<div class="wrap">
+  <div class="page-title">🔥 출석 체크</div>
+  <div class="page-sub">매일 출석하고 연속 기록을 이어가며 포인트와 배지를 모아보세요!</div>
+  <div id="body"><div class="card" style="text-align:center;padding:40px;color:var(--muted);">로그인 상태 확인 중...</div></div>
+  <div class="footer">
+    ⓘ 출석 포인트는 사이트 내 게임용 재화로 현금 가치가 없습니다.<br>
+    © 2026 TierBit. All rights reserved.
+  </div>
+</div>
+
+<div class="modal" id="loginmodal">
+  <div class="pn">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <b style="font-size:16px;">로그인</b><span style="cursor:pointer;color:var(--muted);padding:2px 6px;" onclick="document.getElementById('loginmodal').style.display='none'">✕</span></div>
+    <button id="googlelogin" style="width:100%;padding:11px;border-radius:10px;border:1px solid var(--border);background:#fff;color:#1a1a1a;font-weight:800;font-size:13px;cursor:pointer;">Google 계정으로 로그인</button>
+    <div style="display:flex;align-items:center;gap:10px;margin:14px 0;color:var(--dim);font-size:11px;"><span style="flex:1;height:1px;background:var(--border);"></span>또는<span style="flex:1;height:1px;background:var(--border);"></span></div>
+    <input id="lmemail" type="email" placeholder="이메일" autocomplete="username" style="width:100%;padding:10px 12px;margin-bottom:8px;border-radius:9px;border:1px solid var(--border);background:var(--panel2);color:var(--text);outline:none;font-size:13px;">
+    <input id="lmpw" type="password" placeholder="비밀번호" autocomplete="current-password" style="width:100%;padding:10px 12px;border-radius:9px;border:1px solid var(--border);background:var(--panel2);color:var(--text);outline:none;font-size:13px;">
+    <button id="emaillogin" style="width:100%;padding:11px;border-radius:10px;border:none;background:#1d9e75;color:#fff;font-weight:800;font-size:13px;cursor:pointer;margin-top:10px;">이메일로 로그인</button>
+    <div id="lmerr" style="color:#f0708a;font-size:11.5px;margin-top:8px;min-height:15px;"></div>
+    <div style="color:var(--dim);font-size:10.5px;line-height:1.7;">로그인하면 출석 기록이 계정에 저장되어 어느 기기에서든 이어집니다.</div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+
+firebase.initializeApp({
+  apiKey: "AIzaSyAWwuhXh_maZB5mmsmuKU82XgCMAxEUzVE",
+  authDomain: "stocktier-10c96.firebaseapp.com",
+  projectId: "stocktier-10c96",
+});
+const db = () => firebase.firestore();
+const COL = "coin_games";
+let USER = null, ready = false, G = null, GAINED = 0, GBONUS = "", MOFF = 0, NEWATT = false;
+const MMAX = (function(){ const n = new Date(); return (n.getFullYear()+1)*12 + 11 - (n.getFullYear()*12 + n.getMonth()); })();
+
+const AUTH_ERR = {
+  "auth/invalid-credential":"이메일 또는 비밀번호가 올바르지 않습니다.","auth/invalid-email":"이메일 형식이 올바르지 않습니다.",
+  "auth/user-not-found":"등록되지 않은 계정입니다.","auth/wrong-password":"비밀번호가 올바르지 않습니다.",
+  "auth/too-many-requests":"시도가 너무 많습니다. 잠시 후 다시 해주세요.","auth/popup-closed-by-user":"로그인 창이 닫혔습니다.",
+};
+const lmerr = m => $("lmerr").textContent = m || "";
+$("loginbtn").addEventListener("click", ()=>{
+  if (USER){ if (confirm("로그아웃할까요?")) firebase.auth().signOut(); }
+  else $("loginmodal").style.display = "flex";
+});
+$("loginmodal").addEventListener("click", e=>{ if(e.target===$("loginmodal")) $("loginmodal").style.display="none"; });
+$("googlelogin").addEventListener("click", ()=>{
+  lmerr("");
+  firebase.auth().signInWithPopup(new firebase.auth.GoogleAuthProvider())
+    .then(()=>$("loginmodal").style.display="none")
+    .catch(e=>lmerr(AUTH_ERR[e.code]||"로그인에 실패했습니다."));
+});
+const doEmail = () => {
+  lmerr("");
+  firebase.auth().signInWithEmailAndPassword($("lmemail").value.trim(), $("lmpw").value)
+    .then(()=>$("loginmodal").style.display="none")
+    .catch(e=>lmerr(AUTH_ERR[e.code]||"로그인에 실패했습니다."));
+};
+$("emaillogin").addEventListener("click", doEmail);
+$("lmpw").addEventListener("keydown", e=>{ if(e.key==="Enter") doEmail(); });
+firebase.auth().onAuthStateChanged(u => {
+  ready = true; USER = u;
+  $("loginbtn").textContent = u ? (u.displayName || u.email.split("@")[0]) + " ▾" : "로그인";
+  $("loginbtn").style.borderColor = u ? "var(--gold-dim)" : "";
+  $("loginbtn").style.color = u ? "var(--gold)" : "";
+  load();
+});
+setTimeout(()=>{ if(!ready) locked(); }, 4000);
+
+const box = $("body");
+function locked(){
+  box.innerHTML = `<div class="card" style="text-align:center;padding:50px;">
+    <div style="font-size:28px;margin-bottom:12px;">🔒</div>
+    <div style="font-size:15px;font-weight:800;margin-bottom:6px;">로그인하고 출석을 기록하세요</div>
+    <div style="font-size:12px;color:var(--dim);margin-bottom:16px;">연속 출석 스트릭·포인트·배지가 계정에 저장됩니다.</div>
+    <button style="background:transparent;border:1px solid var(--gold-dim);color:var(--gold);border-radius:9px;padding:10px 26px;font-size:13px;font-weight:800;cursor:pointer;" onclick="document.getElementById('loginmodal').style.display='flex'">로그인하기</button></div>`;
+}
+
+const ymd = d => `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`;
+const BADGES = [[3,"🌱","3일 연속 출석"],[7,"🔥","7일 연속 출석"],[14,"⚡","14일 연속 출석"],[30,"👑","30일 연속 출석"]];
+const monthCount = () => { const now=new Date(), pre=`${now.getFullYear()}${String(now.getMonth()+1).padStart(2,"0")}`; return G.days.filter(d=>d.startsWith(pre)).length; };
+
+async function load(){
+  if (!USER) { locked(); return; }
+  try {
+    const ref = db().collection(COL).doc(USER.uid);
+    const snap = await ref.get();
+    G = snap.exists ? snap.data() : {};
+    G.days = G.days || [];
+    G.streak = G.streak || 0;
+    G.best = G.best || 0;
+    G.pts = G.pts || 0;
+    G.nick = USER.displayName || USER.email.split("@")[0];
+
+    const now = new Date(), today = ymd(now);
+    const yest = new Date(now); yest.setDate(yest.getDate()-1);
+    if (G.lastAttend !== today) {
+      G.streak = (G.lastAttend === ymd(yest)) ? G.streak + 1 : 1;
+      G.best = Math.max(G.best, G.streak);
+      G.lastAttend = today;
+      G.days.push(today);
+      G.days = [...new Set(G.days)].sort().slice(-62);
+      GAINED = 10 + Math.min(20, G.streak - 1);
+      const mc = monthCount();
+      if (mc === 10) { GAINED += 30; GBONUS = "월 10일 출석 보너스 +30P"; }
+      if (mc === 20) { GAINED += 50; GBONUS = "월 20일 출석 보너스 +50P"; }
+      G.pts += GAINED;
+      NEWATT = true;
+      await ref.set(G, { merge: true });
+    }
+    render();
+  } catch(e){
+    box.innerHTML = `<div class="card" style="text-align:center;padding:40px;color:#f0a0b0;">불러오기에 실패했습니다: ${String(e.message||e).slice(0,100)}</div>`;
+  }
+}
+
+function calHtml(){
+  const now = new Date();
+  const base = new Date(now.getFullYear(), now.getMonth()+MOFF, 1);
+  const y = base.getFullYear(), m = base.getMonth();
+  const first = base.getDay(), last = new Date(y, m+1, 0).getDate();
+  const dset = new Set(G.days), today = ymd(now);
+  let cal = ["일","월","화","수","목","금","토"].map(w=>`<div class="wd">${w}</div>`).join("");
+  for (let i=0;i<first;i++) cal += `<div class="d dim" style="background:transparent;border:none;"></div>`;
+  for (let d=1; d<=last; d++){
+    const k = `${y}${String(m+1).padStart(2,"0")}${String(d).padStart(2,"0")}`;
+    const fut = k > today;
+    cal += `<div class="d ${dset.has(k)?"on":""} ${k===today?"today":""} ${fut?"dim":""}">${dset.has(k)?"✓":d}${k===today?`<small>오늘</small>`:""}</div>`;
+  }
+  return `<div class="mnav">
+    <span class="ar" onclick="MOFF--;redraw()">‹</span>
+    <span>${y}년 ${m+1}월</span>
+    <span class="ar" onclick="if(MOFF<MMAX){MOFF++;redraw()}" style="${MOFF>=MMAX?"opacity:.3;cursor:default;":""}">›</span></div>
+    <div class="cal">${cal}</div>`;
+}
+window.redraw = () => { $("calbox").innerHTML = calHtml(); };
+
+function render(){
+  const now = new Date(), today = ymd(now);
+  const daysIn = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
+  const mc = monthCount();
+  const next = BADGES.find(b=>b[0]>G.streak) || BADGES[BADGES.length-1];
+  const toNext = Math.max(0, next[0]-G.streak);
+  const ringPct = Math.min(100, Math.round(G.streak/next[0]*100));
+  const dset = new Set(G.days);
+
+  let tl = "";
+  for (let i=6; i>=0; i--){
+    const d = new Date(now); d.setDate(d.getDate()-i);
+    const k = ymd(d);
+    tl += `<div class="tdot"><span class="c ${dset.has(k)?"on":""} ${k===today?"today":""}">${dset.has(k)?"✓":""}</span><b>${["일","월","화","수","목","금","토"][d.getDay()]}<br>${d.getDate()}</b></div>`;
+  }
+
+  box.innerHTML = `
+  <div class="statgrid">
+    <div class="sbox2"><span class="ic">🔥</span>
+      <div><div class="lb">연속 출석</div><div class="vl num">${G.streak}<span style="font-size:13px;color:var(--muted);">일</span></div><div class="sub">최고 기록 ${G.best}일</div></div></div>
+    <div class="sbox2"><span class="ic">📆</span>
+      <div style="flex:1;"><div class="lb">이번 달 출석</div><div class="vl num">${mc} <span style="font-size:13px;color:var(--muted);">/ ${daysIn}일</span></div>
+      <div class="pbar"><i class="grn" style="width:${Math.round(mc/daysIn*100)}%;"></i></div></div></div>
+    <div class="sbox2"><span class="ic">🪙</span>
+      <div><div class="lb">출석 포인트</div><div class="vl num" style="color:#f0c948;">${G.pts.toLocaleString("ko-KR")}<span style="font-size:13px;">P</span></div><div class="sub">누적 획득 포인트</div></div></div>
+    <div class="sbox2"><span class="ic">🛡</span>
+      <div style="flex:1;"><div class="lb">다음 배지까지</div><div class="vl num">${toNext}<span style="font-size:13px;color:var(--muted);">일 남음</span></div>
+      <div class="pbar"><i style="width:${ringPct}%;"></i></div><div class="sub" style="text-align:right;">${Math.min(G.streak,next[0])} / ${next[0]}일</div></div></div>
+  </div>
+  <div class="layout">
+    <div style="display:flex;flex-direction:column;">
+      <div class="card"><div id="calbox">${calHtml()}</div></div>
+      <div style="display:grid;grid-template-columns:1.25fr 1fr;gap:14px;margin-top:14px;align-items:stretch;flex:1;">
+        <div class="card" style="display:flex;flex-direction:column;"><h3>최근 출석 기록</h3>
+          <div style="margin:auto 0;">
+            <div class="tline">${tl}</div>
+            <div style="display:flex;gap:14px;justify-content:center;font-size:10.5px;color:var(--dim);font-weight:700;margin-top:14px;">
+              <span><span style="color:#4cd7a5;">●</span> 출석</span><span><span style="color:var(--border);">●</span> 미출석</span><span><span style="color:var(--gold);">○</span> 오늘</span></div>
+          </div>
+        </div>
+        <div class="card"><h3>출석 혜택 안내</h3>
+          <div class="benrow"><span class="bic">🔥</span><div style="font-size:11.5px;color:var(--muted);line-height:1.7;"><b style="color:var(--text);">연속 출석 보너스</b><br>기본 10P + 연속 하루당 +1P (최대 +20P)</div></div>
+          <div class="benrow"><span class="bic">📅</span><div style="font-size:11.5px;color:var(--muted);line-height:1.7;"><b style="color:var(--text);">월간 보너스</b><br>한 달 10일 출석 시 +30P · 20일 출석 시 +50P</div></div>
+          <div class="benrow"><span class="bic">💰</span><div style="font-size:11.5px;color:var(--muted);line-height:1.7;"><b style="color:var(--text);">모의투자 지원금</b><br>포인트 1P당 매월 지급되는 모의투자 자금 +100만원 (리그 오픈 시)</div></div>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div class="card"><h3>배지 <span class="more">수집 현황 ${BADGES.filter(b=>G.best>=b[0]).length} / ${BADGES.length}</span></h3>
+        ${BADGES.map(([n,ic,lb],i)=>{
+          const got = G.best>=n, pct = Math.min(100,Math.round(G.best/n*100));
+          const cols = [["#f0b24a","#a86a1e"],["#d3dde3","#85939c"],["#f0c948","#b8891e"],["#c77dff","#7a3fb0"]][i];
+          const shield = `<svg viewBox="0 0 40 44" width="34" height="37" style="flex-shrink:0;filter:drop-shadow(0 1px 2px rgba(0,0,0,.45));${got?"":"opacity:.4;"}"><defs><linearGradient id="bg${i}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${cols[0]}"/><stop offset="1" stop-color="${cols[1]}"/></linearGradient></defs><path d="M20 2 L36 8 V22 C36 33 29 40 20 43 C11 40 4 33 4 22 V8 Z" fill="url(#bg${i})" stroke="#ffffff66" stroke-width="1"/><path d="M20 12.5 l2.6 5.3 5.9.6 -4.4 4 1.3 5.8 -5.4-3 -5.4 3 1.3-5.8 -4.4-4 5.9-.6z" fill="#fff" opacity=".92"/></svg>`;
+          return `<div class="badge3">${shield}
+            <div style="flex:1;"><div style="font-size:12px;font-weight:700;">${lb}</div>
+            <div class="pbar" style="margin-top:6px;"><i class="grn" style="width:${pct}%;"></i></div></div>
+            <span style="font-size:10.5px;color:${got?"#4cd7a5":"var(--dim)"};font-weight:700;flex-shrink:0;">${got?"달성!":`${Math.min(G.best,n)} / ${n}`}</span></div>`;}).join("")}
+      </div>
+      <div class="card"><h3>🏆 스트릭 랭킹</h3><div id="ranks">불러오는 중...</div></div>
+      <div class="card"><h3>오늘의 출석 보상</h3>
+        <div style="display:flex;align-items:center;gap:14px;padding:6px 0;">
+          <span class="ic" style="width:46px;height:46px;border-radius:13px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:24px;">🪙</span>
+          <div style="flex:1;"><b class="num" style="font-size:22px;color:#f0c948;">${NEWATT?GAINED:0}P</b>
+            <div style="font-size:10.5px;color:var(--dim);">출석 포인트${GBONUS?` · ${GBONUS}`:""}</div></div>
+          <span style="width:62px;height:62px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;text-align:center;font-size:11px;font-weight:900;color:#5c3300;line-height:1.25;background:radial-gradient(circle at 40% 34%,#ffe98a,#e0a020);box-shadow:0 0 14px #f0c94877, inset 0 0 0 2px #ffffff55;">획득<br>완료</span>
+        </div>
+      </div>
+      <div class="card" style="flex:1;"><h3>이번 달 달성률</h3>
+        <b class="num" style="font-size:24px;">${Math.round(mc/daysIn*100)}<span style="font-size:14px;">%</span></b>
+        <span style="font-size:11px;color:var(--dim);font-weight:700;margin-left:8px;">${mc} / ${daysIn}일</span>
+        <div class="pbar" style="margin-top:9px;"><i class="grn" style="width:${Math.round(mc/daysIn*100)}%;"></i></div>
+        <div style="font-size:10.5px;color:var(--muted);font-weight:700;margin-top:10px;">🎁 ${mc<10?`10일 출석 시 +30P 보너스 (${10-mc}일 남음)`:mc<20?`20일 출석 시 +50P 보너스 (${20-mc}일 남음)`:"이번 달 월간 보너스 모두 달성!"}</div>
+      </div>
+    </div>
+  </div>`;
+
+  loadRanks();
+}
+
+async function loadRanks(){
+  const el = $("ranks");
+  if (!el) return;
+  try {
+    const rs = await db().collection(COL).orderBy("streak","desc").limit(20).get();
+    const rows = [];
+    rs.forEach(d => { const v = d.data(); if (v.streak) rows.push({ uid:d.id, ...v }); });
+    el.innerHTML = rows.length ? rows.slice(0,5).map((r,i)=>`
+      <div class="rkrow ${USER&&r.uid===USER.uid?"me":""}">
+        <span class="rank">${i<3?["🥇","🥈","🥉"][i]:i+1}</span>
+        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${(r.nick||"익명").replace(/</g,"&lt;")}</span>
+        <span class="num" style="color:#f0c948;">🔥 ${r.streak}일</span>
+      </div>`).join("")
+    : `<div style="font-size:12px;color:var(--dim);">아직 기록이 없어요.</div>`;
+  } catch(e) { el.innerHTML = `<div style="font-size:12px;color:var(--dim);">랭킹을 불러오지 못했습니다.</div>`; }
+}
+</script>
+</body>
+</html>

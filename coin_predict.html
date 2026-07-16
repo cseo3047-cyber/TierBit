@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TierBit — 예측 게임</title>
+<style>
+  :root {
+    --bg:#0a1620; --panel:#10231c; --panel2:#0d2733; --border:#1c3a33;
+    --text:#e8f4f8; --muted:#9db8a9; --dim:#5a737d;
+    --gold:#f0c948; --gold-dim:#c9a832; --up:#4cd7a5; --down:#f0645a;
+  }
+  * { margin:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",-apple-system,sans-serif; font-size:14px; }
+  a { color:inherit; text-decoration:none; }
+  .num { font-variant-numeric:tabular-nums; }
+  .up { color:var(--up); } .down { color:var(--down); } .flat { color:var(--muted); }
+  .nav { display:flex; align-items:center; gap:14px; padding:13px 22px; border-bottom:1px solid var(--border); background:#0a1a22; position:sticky; top:0; z-index:100; }
+  .brand { display:flex; align-items:center; gap:9px; font-size:20px; font-weight:800; letter-spacing:.3px; }
+  .brand .mark { display:flex; align-items:flex-end; gap:2px; height:20px; }
+  .brand .mark i { display:block; width:5px; border-radius:2px; background:var(--gold); }
+  .brand .mark i:nth-child(1){height:10px;background:var(--up);} .brand .mark i:nth-child(2){height:16px;} .brand .mark i:nth-child(3){height:13px;background:var(--up);}
+  .nlink { font-size:13px; font-weight:700; color:var(--muted); padding:6px 10px; border-radius:8px; }
+  .nlink:hover { color:var(--text); background:#ffffff0d; }
+  .nlink.on { color:var(--gold); }
+  #loginbtn { margin-left:auto; background:transparent; border:1px solid var(--border); color:var(--muted); border-radius:9px; padding:7px 15px; font-size:12px; font-weight:800; cursor:pointer; }
+  .wrap { max-width:1220px; margin:0 auto; padding:22px 18px 30px; }
+  .page-title { font-size:26px; font-weight:800; margin-bottom:6px; }
+  .page-sub { font-size:13px; color:var(--muted); margin-bottom:18px; line-height:1.7; }
+  .card { background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:18px 20px; min-width:0; }
+  .card h3 { font-size:15px; font-weight:800; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+  .card h3 .more { margin-left:auto; font-size:11px; color:var(--dim); font-weight:700; cursor:pointer; }
+  .layout { display:grid; grid-template-columns:1fr 320px; gap:14px; align-items:start; }
+  @media (max-width:1000px){ .layout { grid-template-columns:1fr; } }
+  .statgrid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:14px; }
+  @media (max-width:800px){ .statgrid { grid-template-columns:1fr; } }
+  .sbox2 { background:linear-gradient(135deg,#0d2e3b,#123f4b); border:1px solid var(--border); border-radius:14px; padding:14px 17px; display:flex; align-items:center; gap:13px; }
+  .sbox2 .ic { width:46px; height:46px; border-radius:13px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .sbox2 .lb { font-size:11.5px; color:var(--muted); font-weight:700; }
+  .sbox2 .vl { font-size:21px; font-weight:800; margin-top:3px; line-height:1.2; }
+  .sbox2 .sub { font-size:10.5px; color:var(--dim); margin-top:3px; }
+  .pbar { height:6px; border-radius:4px; background:#0d3a52; overflow:hidden; margin-top:7px; }
+  .pbar i { display:block; height:100%; border-radius:4px; background:linear-gradient(90deg,#177052,#3aa583); }
+  .qrow { background:linear-gradient(135deg,#0d2e3b,#123f4b); border:1px solid var(--border); border-radius:14px; padding:15px 17px; margin-bottom:12px; }
+  .qhead { display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  .qico { width:44px; height:44px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:800; color:#0a1620; }
+  .picks { display:flex; gap:10px; flex-shrink:0; }
+  .pickbtn { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-width:130px; padding:11px 20px; border-radius:12px; border:1.5px solid var(--border); background:var(--panel2); color:var(--text); font-size:14px; font-weight:800; cursor:pointer; white-space:nowrap; }
+  .pickbtn .ar { font-size:18px; line-height:1; }
+  .pickbtn.up:hover, .pickbtn.up.sel { background:#12271d; border-color:#3f9b76; color:#6bbf9c; }
+  .pickbtn.dn:hover, .pickbtn.dn.sel { background:#2c161a; border-color:#b0535d; color:#cf888f; }
+  .pickbtn:disabled { cursor:default; opacity:.5; }
+  .pickbtn.sel:disabled { opacity:1; }
+  .rtbl { width:100%; border-collapse:collapse; font-size:12px; }
+  .rtbl th { text-align:center; color:var(--dim); font-size:10.5px; font-weight:700; padding:7px 4px; border-bottom:1px solid var(--border); white-space:nowrap; }
+  .rtbl td { padding:9px 4px; border-bottom:1px solid #ffffff0d; text-align:center; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .rtbl td.nm { text-align:left; font-weight:700; }
+  .donut2 { width:84px; height:84px; border-radius:50%; position:relative; flex-shrink:0; }
+  .donut2 .hole { position:absolute; inset:12px; background:var(--panel); border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .rkrow { display:flex; align-items:center; gap:9px; padding:8px 6px; border-bottom:1px solid #ffffff0d; font-size:12.5px; font-weight:700; }
+  .rkrow:last-child { border-bottom:none; }
+  .rkrow .rank { width:22px; text-align:center; flex-shrink:0; font-size:13px; font-weight:800; color:var(--muted); }
+  .rkrow.me { background:#3d331322; border-radius:8px; }
+  .tiprow { display:flex; gap:11px; padding:9px 0; border-bottom:1px solid #ffffff0d; align-items:flex-start; }
+  .tiprow:last-child { border-bottom:none; }
+  .tiprow .tic { width:32px; height:32px; border-radius:9px; background:#13322a; border:1px solid #2e5c47; display:flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0; }
+  .wkbars { display:flex; gap:12px; align-items:flex-end; justify-content:space-around; height:130px; padding:6px 8px 0; }
+  .wkcol { display:flex; flex-direction:column; align-items:center; gap:6px; flex:1; height:100%; justify-content:flex-end; max-width:60px; }
+  .wkbar { width:26px; border-radius:5px 5px 0 0; display:flex; flex-direction:column; overflow:hidden; }
+  .colR { display:flex; flex-direction:column; gap:12px; }
+  .lbot { display:grid; grid-template-columns:1.55fr 1fr; gap:14px; align-items:stretch; margin-top:14px; }
+  @media (max-width:800px){ .lbot { grid-template-columns:1fr; } }
+  .footer { max-width:1220px; margin:18px auto 0; padding:15px 18px 26px; font-size:11.5px; color:var(--muted); border-top:1px solid var(--border); line-height:2.0; text-align:center; }
+  .modal { position:fixed; inset:0; background:#000000aa; display:none; align-items:center; justify-content:center; z-index:300; }
+  .modal .pn { background:var(--panel); border:1px solid var(--border); border-radius:16px; width:min(360px,92vw); max-height:82vh; overflow:auto; padding:24px; }
+</style>
+</head>
+<body>
+<nav class="nav">
+  <a class="brand" href="index.html"><span class="mark"><i></i><i></i><i></i></span>TierBit</a>
+  <a class="nlink" href="index.html">홈</a>
+  <a class="nlink" href="chart.html">차트</a>
+  <a class="nlink on" href="predict.html">예측게임</a>
+  <a class="nlink" href="attend.html">출석체크</a>
+  <button id="loginbtn">로그인</button>
+</nav>
+<div class="wrap">
+  <div class="page-title">🎯 오늘의 예측 게임</div>
+  <div class="page-sub">이 코인, 내일 이 시간엔 오를까 내릴까? 예측한 다음 날 접속하면 그 시점 시세로 자동 채점됩니다. (24시간 거래 기준)</div>
+  <div id="body"><div class="card" style="text-align:center;padding:40px;color:var(--muted);">로그인 상태 확인 중...</div></div>
+  <div class="footer">
+    ⓘ 예측 게임은 오락용 콘텐츠이며 투자 권유가 아닙니다. 가상자산은 가격 변동성이 매우 큽니다.<br>
+    데이터: 업비트 공개 API &nbsp;·&nbsp; © 2026 TierBit. All rights reserved.
+  </div>
+</div>
+
+<div class="modal" id="loginmodal">
+  <div class="pn">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <b style="font-size:16px;">로그인</b><span style="cursor:pointer;color:var(--muted);padding:2px 6px;" onclick="document.getElementById('loginmodal').style.display='none'">✕</span></div>
+    <button id="googlelogin" style="width:100%;padding:11px;border-radius:10px;border:1px solid var(--border);background:#fff;color:#1a1a1a;font-weight:800;font-size:13px;cursor:pointer;">Google 계정으로 로그인</button>
+    <div style="display:flex;align-items:center;gap:10px;margin:14px 0;color:var(--dim);font-size:11px;"><span style="flex:1;height:1px;background:var(--border);"></span>또는<span style="flex:1;height:1px;background:var(--border);"></span></div>
+    <input id="lmemail" type="email" placeholder="이메일" autocomplete="username" style="width:100%;padding:10px 12px;margin-bottom:8px;border-radius:9px;border:1px solid var(--border);background:var(--panel2);color:var(--text);outline:none;font-size:13px;">
+    <input id="lmpw" type="password" placeholder="비밀번호" autocomplete="current-password" style="width:100%;padding:10px 12px;border-radius:9px;border:1px solid var(--border);background:var(--panel2);color:var(--text);outline:none;font-size:13px;">
+    <button id="emaillogin" style="width:100%;padding:11px;border-radius:10px;border:none;background:#1d9e75;color:#fff;font-weight:800;font-size:13px;cursor:pointer;margin-top:10px;">이메일로 로그인</button>
+    <div id="lmerr" style="color:#f0708a;font-size:11.5px;margin-top:8px;min-height:15px;"></div>
+    <div style="color:var(--dim);font-size:10.5px;line-height:1.7;">로그인하면 예측 기록이 계정에 저장되어 어느 기기에서든 이어집니다.</div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const num = v => Math.round(v).toLocaleString("ko-KR");
+const pfmt = p => p==null ? "-" : p >= 100 ? num(p) : p >= 1 ? p.toLocaleString("ko-KR",{minimumFractionDigits:2,maximumFractionDigits:2}) : p.toLocaleString("ko-KR",{minimumFractionDigits:4,maximumFractionDigits:4});
+async function jget(url){ const r = await fetch(url); if(!r.ok) throw new Error(url+" "+r.status); return r.json(); }
+const kstDate = () => { const d = new Date(Date.now()+9*3600e3); return d.toISOString().slice(0,10).replaceAll("-",""); };
+const DDATE = kstDate();
+
+// ── Firebase (Stocktier와 동일 프로젝트 · 코인 전용 컬렉션 coin_games)
+firebase.initializeApp({
+  apiKey: "AIzaSyAWwuhXh_maZB5mmsmuKU82XgCMAxEUzVE",
+  authDomain: "stocktier-10c96.firebaseapp.com",
+  projectId: "stocktier-10c96",
+});
+const db = () => firebase.firestore();
+const COL = "coin_games";
+let USER = null, ready = false;
+
+const AUTH_ERR = {
+  "auth/invalid-credential":"이메일 또는 비밀번호가 올바르지 않습니다.","auth/invalid-email":"이메일 형식이 올바르지 않습니다.",
+  "auth/user-not-found":"등록되지 않은 계정입니다.","auth/wrong-password":"비밀번호가 올바르지 않습니다.",
+  "auth/too-many-requests":"시도가 너무 많습니다. 잠시 후 다시 해주세요.","auth/popup-closed-by-user":"로그인 창이 닫혔습니다.",
+};
+const lmerr = m => $("lmerr").textContent = m || "";
+$("loginbtn").addEventListener("click", ()=>{
+  if (USER){ if (confirm("로그아웃할까요?")) firebase.auth().signOut(); }
+  else $("loginmodal").style.display = "flex";
+});
+$("loginmodal").addEventListener("click", e=>{ if(e.target===$("loginmodal")) $("loginmodal").style.display="none"; });
+$("googlelogin").addEventListener("click", ()=>{
+  lmerr("");
+  firebase.auth().signInWithPopup(new firebase.auth.GoogleAuthProvider())
+    .then(()=>$("loginmodal").style.display="none")
+    .catch(e=>lmerr(AUTH_ERR[e.code]||"로그인에 실패했습니다."));
+});
+const doEmail = () => {
+  lmerr("");
+  firebase.auth().signInWithEmailAndPassword($("lmemail").value.trim(), $("lmpw").value)
+    .then(()=>$("loginmodal").style.display="none")
+    .catch(e=>lmerr(AUTH_ERR[e.code]||"로그인에 실패했습니다."));
+};
+$("emaillogin").addEventListener("click", doEmail);
+$("lmpw").addEventListener("keydown", e=>{ if(e.key==="Enter") doEmail(); });
+firebase.auth().onAuthStateChanged(u => {
+  ready = true; USER = u;
+  $("loginbtn").textContent = u ? (u.displayName || u.email.split("@")[0]) + " ▾" : "로그인";
+  $("loginbtn").style.borderColor = u ? "var(--gold-dim)" : "";
+  $("loginbtn").style.color = u ? "var(--gold)" : "";
+  load();
+});
+setTimeout(()=>{ if(!ready) locked(); }, 4000);
+
+const box = $("body");
+function locked(){
+  box.innerHTML = `<div class="card" style="text-align:center;padding:50px;">
+    <div style="font-size:28px;margin-bottom:12px;">🔒</div>
+    <div style="font-size:15px;font-weight:800;margin-bottom:6px;">로그인하고 예측 게임에 참여하세요</div>
+    <div style="font-size:12px;color:var(--dim);margin-bottom:16px;">적중률이 기록되고 랭킹에 오릅니다.</div>
+    <button style="background:transparent;border:1px solid var(--gold-dim);color:var(--gold);border-radius:9px;padding:10px 26px;font-size:13px;font-weight:800;cursor:pointer;" onclick="document.getElementById('loginmodal').style.display='flex'">로그인하기</button></div>`;
+}
+
+// ── 오늘의 3문제: 고정 후보군에서 날짜 해시로 모두에게 동일하게 선정
+const CAND = ["KRW-BTC","KRW-ETH","KRW-XRP","KRW-SOL","KRW-ADA","KRW-DOGE","KRW-TRX","KRW-AVAX","KRW-LINK","KRW-DOT",
+              "KRW-BCH","KRW-XLM","KRW-ETC","KRW-HBAR","KRW-SUI","KRW-AAVE","KRW-SAND","KRW-SHIB","KRW-NEAR","KRW-ARB"];
+const hashOf = s => { let h=7; for (const c of String(s)) h=(h*31+c.charCodeAt(0))>>>0; return h; };
+const COL_ICO = ["#f7931a","#627eea","#23b8e0","#9945ff","#0033ad","#c2a633","#eb0029","#e84142","#2a5ada","#e6007a"];
+
+let NAMES = {}, POOL = [], QS = [], TICK = {}, SPKS = {};
+async function initData(){
+  const all = await jget("https://api.upbit.com/v1/market/all?isDetails=false");
+  all.filter(m=>m.market.startsWith("KRW-")).forEach(m=>NAMES[m.market]=m.korean_name);
+  POOL = CAND.filter(m=>NAMES[m]);
+  QS = [];
+  for (let i=0; QS.length<3 && i<60 && POOL.length; i++){
+    const m = POOL[hashOf(DDATE+":"+i) % POOL.length];
+    if (!QS.includes(m)) QS.push(m);
+  }
+  const ts = await jget("https://api.upbit.com/v1/ticker?markets="+QS.join(","));
+  ts.forEach(t=>TICK[t.market]=t);
+  // 미니 차트: 최근 30일 종가
+  await Promise.all(QS.map(async m=>{
+    try { const rows = await jget(`https://api.upbit.com/v1/candles/days?market=${m}&count=30`);
+      SPKS[m] = rows.reverse().map(c=>+c.trade_price); } catch(e){ SPKS[m]=null; }
+  }));
+}
+function spark(arr, w, h){
+  if (!Array.isArray(arr) || arr.length<2) return `<span style="display:inline-block;width:${w}px;height:${h}px;"></span>`;
+  const mn=Math.min(...arr), mx=Math.max(...arr), rg=(mx-mn)||1, padY=h*0.24;
+  const X=i=>(i/(arr.length-1)*(w-2)+1).toFixed(1), Y=p=>(h-padY-(p-mn)/rg*(h-padY*2)).toFixed(1);
+  const line=arr.map((p,i)=>`${X(i)},${Y(p)}`).join(" ");
+  const up=arr[arr.length-1]>=arr[0], col=up?"#57b892":"#d1786e";
+  const gid="g"+Math.random().toString(36).slice(2,7);
+  return `<svg width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" style="flex-shrink:0;display:block;">
+    <defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${col}" stop-opacity=".22"/><stop offset="1" stop-color="${col}" stop-opacity="0"/></linearGradient></defs>
+    <polygon points="${X(0)},${h} ${line} ${X(arr.length-1)},${h}" fill="url(#${gid})"/>
+    <polyline points="${line}" fill="none" stroke="${col}" stroke-width="1.7" stroke-linejoin="round"/></svg>`;
+}
+const coinIco = (m,i) => `<span class="qico" style="background:${COL_ICO[i%COL_ICO.length]};">${m.replace("KRW-","").slice(0,3)}</span>`;
+
+// ── 채점: 어제 이전 예측을 현재 시세로 판정
+async function judge(G){
+  const days = Object.keys(G.preds||{}).filter(dk=>dk<DDATE && !G.preds[dk].done);
+  if (!days.length) return null;
+  const mkts = [...new Set(days.flatMap(dk=>Object.keys(G.preds[dk].picks||{})))];
+  if (!mkts.length){ days.forEach(dk=>G.preds[dk].done=true); return null; }
+  const ts = await jget("https://api.upbit.com/v1/ticker?markets="+mkts.join(","));
+  const cur = {}; ts.forEach(t=>cur[t.market]=t.trade_price);
+  const judged = [];
+  let hit=G.hit||0, total=G.total||0, pstreak=G.pstreak||0, pbest=G.pbest||0;
+  for (const dk of days.sort()){
+    const pd = G.preds[dk];
+    for (const m of Object.keys(pd.picks||{})){
+      if (cur[m]==null) continue;
+      const ok = (cur[m] > pd.price0[m]) === (pd.picks[m]==="up");
+      hit += ok?1:0; total += 1;
+      pstreak = ok?pstreak+1:0; pbest = Math.max(pbest,pstreak);
+      judged.push({ name:NAMES[m]||m, mkt:m, pick:pd.picks[m], ok, p0:pd.price0[m], p1:cur[m], d:dk });
+    }
+    pd.done = true;
+  }
+  if (!judged.length) return null;
+  G.hit=hit; G.total=total; G.pstreak=pstreak; G.pbest=pbest;
+  G.res = judged.slice().reverse().concat(G.res||[]).slice(0,40);
+  return judged;
+}
+function judgePopup(judged, G){
+  const okN = judged.filter(j=>j.ok).length;
+  const pm = document.createElement("div");
+  pm.className = "modal"; pm.style.display = "flex";
+  pm.innerHTML = `<div class="pn" style="border-color:var(--gold-dim);">
+    <div style="font-size:17px;font-weight:800;margin-bottom:4px;">🎯 예측 결과 도착!</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">지난 예측 ${judged.length}개 중 <b style="color:${okN>judged.length/2?"var(--up)":"var(--down)"};">${okN}개 적중</b> · 누적 적중률 ${Math.round(G.hit/G.total*100)}%</div>
+    ${judged.map(j=>`<div style="display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid #ffffff0d;font-size:13px;">
+      <span style="font-size:16px;">${j.ok?"⭕":"❌"}</span><b style="flex:1;">${j.name}</b>
+      <span style="color:var(--muted);font-size:12px;">${j.pick==="up"?"📈 오른다":"📉 내린다"}</span>
+      <span class="num" style="color:var(--dim);font-size:11px;">${pfmt(j.p0)}→${pfmt(j.p1)}</span></div>`).join("")}
+    <button onclick="this.closest('.modal').remove()" style="width:100%;margin-top:16px;padding:11px;border-radius:10px;border:none;background:#1d9e75;color:#fff;font-weight:800;font-size:13px;cursor:pointer;">확인</button></div>`;
+  pm.addEventListener("click", e=>{ if(e.target===pm) pm.remove(); });
+  document.body.appendChild(pm);
+}
+
+let G = null;
+async function load(){
+  if (!USER){ locked(); return; }
+  try {
+    if (!POOL.length) await initData();
+    const ref = db().collection(COL).doc(USER.uid);
+    const snap = await ref.get();
+    G = snap.exists ? snap.data() : {};
+    G.preds = G.preds||{}; G.hit=G.hit||0; G.total=G.total||0;
+    G.pstreak=G.pstreak||0; G.pbest=G.pbest||0; G.res=G.res||[];
+    G.nick = USER.displayName || USER.email.split("@")[0];
+    const judged = await judge(G);
+    await ref.set(G, { merge:true });
+    render();
+    if (judged) judgePopup(judged, G);
+  } catch(e){
+    box.innerHTML = `<div class="card" style="text-align:center;padding:40px;color:#f0a0b0;">불러오기에 실패했습니다: ${String(e.message||e).slice(0,100)}</div>`;
+  }
+}
+
+function render(){
+  const today = G.preds[DDATE] || { picks:{}, price0:{} };
+  const doneN = Object.keys(today.picks||{}).length;
+  const rate = G.total ? Math.round(G.hit/G.total*100) : 0;
+  const byday = {};
+  for (const r of G.res){ if(!r.d) continue; (byday[r.d]=byday[r.d]||{ok:0,no:0})[r.ok?"ok":"no"]++; }
+  const wdays = Object.keys(byday).sort().slice(-5);
+  const wOk = wdays.reduce((s,d)=>s+byday[d].ok,0), wNo = wdays.reduce((s,d)=>s+byday[d].no,0);
+  const wMax = Math.max(1, ...wdays.map(d=>byday[d].ok+byday[d].no));
+
+  box.innerHTML = `
+  <div class="statgrid">
+    <div class="sbox2"><span class="ic" style="background:linear-gradient(135deg,#2e8f70,#215f5f);"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h9.5"/><path d="M9 11l3 3L22 4"/></svg></span>
+      <div style="flex:1;"><div class="lb">오늘 진행률</div><div class="vl num">${doneN} <span style="font-size:13px;color:var(--muted);">/ 3 문제</span></div>
+      <div class="pbar"><i style="width:${Math.round(doneN/3*100)}%;"></i></div></div>
+      <b class="num" style="font-size:13px;color:#6bbf9c;">${Math.round(doneN/3*100)}%</b></div>
+    <div class="sbox2"><span class="ic" style="background:linear-gradient(135deg,#d99a4a,#b06a34);"><svg width="23" height="23" viewBox="0 0 24 24" fill="#fff"><rect x="3" y="12.5" width="4.4" height="7.5" rx="1"/><rect x="9.8" y="7" width="4.4" height="13" rx="1"/><rect x="16.6" y="3" width="4.4" height="17" rx="1"/></svg></span>
+      <div><div class="lb">누적 적중률</div><div class="vl num" style="color:${rate>=60?"#6bbf9c":rate>=40?"#e0c064":"var(--text)"};">${rate}%</div>
+      <div class="sub">적중 ${G.hit} / 전체 ${G.total}</div></div></div>
+    <div class="sbox2"><span class="ic" style="background:linear-gradient(135deg,#d9704e,#b0473f);"><svg width="22" height="24" viewBox="0 0 22 24" fill="#fff"><path d="M11 1.5c.6 3.8-2.8 5.4-2.8 9.2 0-1.6-1.2-2.6-1.2-2.6-2 1.8-3.5 4-3.5 7.1a7.5 7.5 0 0 0 15 0c0-3.4-2.2-5.4-3-7.6-.9 1.7-2.4 2.6-3.6 2.9 1.3-2.8 .7-6.4-.9-9z"/></svg></span>
+      <div><div class="lb">현재 연속 적중</div><div class="vl num">${G.pstreak} <span style="font-size:13px;color:var(--muted);">연속</span></div>
+      <div class="sub">최고 기록 ${G.pbest}연속</div></div></div>
+  </div>
+  <div class="layout">
+    <div>
+      <div class="card" style="margin-bottom:0;"><h3>오늘의 3문제 <span class="more" style="cursor:default;">지금 시세 기준 → 내일 접속 시점 시세로 판정</span></h3>
+        ${QS.map((m,qi)=>{
+          const t = TICK[m]; if (!t) return "";
+          const chg = (t.signed_change_rate||0)*100;
+          const picked = today.picks[m];
+          return `<div class="qrow">
+            <div class="qhead">${coinIco(m,qi)}
+              <div style="flex:1;min-width:0;">
+                <b style="font-size:15px;">${NAMES[m]||m} <span style="color:var(--dim);font-size:10px;font-weight:600;">${m.replace("KRW-","")}</span></b>
+                <div class="num" style="font-size:12px;color:var(--dim);margin-top:3px;">현재가 ${pfmt(t.trade_price)}원 · 24h <span class="${chg>0?"up":chg<0?"down":"flat"}">${chg>=0?"+":""}${chg.toFixed(2)}%</span></div>
+              </div>
+              <span>${spark(SPKS[m], 132, 42)}</span>
+              <div class="picks">
+                <button class="pickbtn up ${picked==="up"?"sel":""}" data-m="${m}" data-p="up" ${picked?"disabled":""}><span class="ar">⬆</span> 오른다</button>
+                <button class="pickbtn dn ${picked==="down"?"sel":""}" data-m="${m}" data-p="down" ${picked?"disabled":""}><span class="ar">⬇</span> 내린다</button>
+              </div>
+            </div>
+            ${picked?`<div style="display:flex;justify-content:space-between;font-size:11.5px;font-weight:700;margin-top:11px;">
+              <span style="color:#6bbf9c;">✓ 예측 완료 — 기준가 ${pfmt(today.price0[m])}원, 내일 접속하면 채점됩니다</span>
+              <span style="color:var(--dim);">🕐 정답 공개 D-1</span></div>`:""}
+          </div>`;}).join("")}
+      </div>
+      <div class="lbot">
+        <div class="card"><h3>최근 채점 결과</h3>
+          ${G.res.length ? `<table class="rtbl"><thead><tr><th>날짜</th><th>코인</th><th>내 예측</th><th>판정가</th><th>변동</th><th>판정</th></tr></thead><tbody>
+            ${G.res.slice(0,6).map(j=>{
+              const ret = (j.p0&&j.p1)?(j.p1/j.p0-1)*100:0;
+              return `<tr>
+              <td style="color:var(--text);">${j.d?`${j.d.slice(4,6)}/${j.d.slice(6,8)}`:"-"}</td>
+              <td class="nm">${j.name}</td>
+              <td class="${j.pick==="up"?"up":"down"}">${j.pick==="up"?"▲ 오른다":"▼ 내린다"}</td>
+              <td class="num" style="font-weight:700;">${pfmt(j.p1)}원</td>
+              <td class="num ${ret>0?"up":ret<0?"down":"flat"}" style="font-weight:700;">${ret>=0?"+":""}${ret.toFixed(2)}%</td>
+              <td style="font-weight:800;color:${j.ok?"#6bbf9c":"#cf888f"};">${j.ok?"✓ 적중":"✗ 오답"}</td></tr>`;}).join("")}
+          </tbody></table>`
+          : `<div style="font-size:12px;color:var(--dim);padding:10px 0;">아직 채점된 예측이 없습니다. 예측 후 내일 확인하세요!</div>`}
+        </div>
+        <div class="card"><h3>💡 예측 팁</h3>
+          <div class="tiprow"><span class="tic">₿</span><div style="font-size:11.5px;color:var(--muted);line-height:1.7;"><b style="color:var(--text);">비트코인 방향 먼저</b><br>알트코인 대부분은 비트코인 방향을 따라갑니다. BTC 추세를 먼저 확인하세요.</div></div>
+          <div class="tiprow"><span class="tic">🌏</span><div style="font-size:11.5px;color:var(--muted);line-height:1.7;"><b style="color:var(--text);">김치 프리미엄 체크</b><br>김프가 과도하게 높으면 단기 조정이 오는 경우가 많아요. 홈 화면에서 확인!</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="colR">
+      <div class="card"><h3>내 전적</h3>
+        <div style="display:flex;align-items:center;gap:16px;padding:6px 0;">
+          <div class="donut2" style="background:conic-gradient(#3aa583 0% ${rate}%, #0d3a52 ${rate}% 100%);">
+            <div class="hole"><b class="num" style="font-size:17px;">${rate}%</b><span style="font-size:9px;color:var(--dim);">적중률</span></div></div>
+          <div style="flex:1;display:flex;gap:14px;">
+            <div style="text-align:center;flex:1;"><b class="num" style="font-size:20px;display:block;">${G.hit}</b><span style="font-size:10.5px;color:var(--dim);">적중</span></div>
+            <div style="text-align:center;flex:1;"><b class="num" style="font-size:20px;display:block;">${G.total}</b><span style="font-size:10.5px;color:var(--dim);">전체</span></div>
+          </div>
+        </div>
+        <div style="font-size:11.5px;color:var(--muted);font-weight:700;text-align:center;background:var(--panel2);border:1px solid var(--border);border-radius:9px;padding:7px;">🔥 <b style="color:#e0c064;">${G.pstreak}연속</b> 적중 중</div>
+      </div>
+      <div class="card"><h3>🏆 적중 랭킹 <span class="more" onclick="document.getElementById('rankall').style.display='flex'">전체 보기 &gt;</span></h3><div id="ranks">불러오는 중...</div></div>
+      <div class="card"><h3>이번 주 성과 <span class="more" style="cursor:default;"><span style="color:#57b892;">■</span> 적중 <span style="color:#c47a72;">■</span> 오답</span></h3>
+        ${wdays.length ? `<div class="wkbars">
+          ${wdays.map(d=>{ const b=byday[d], t=b.ok+b.no;
+            return `<div class="wkcol"><div class="wkbar" style="height:${Math.max(24,Math.round(t/wMax*104))}px;">
+              <span style="flex:${b.no};background:#a85248;"></span><span style="flex:${b.ok};background:linear-gradient(180deg,#57b892,#2e7d63);"></span></div>
+              <span style="font-size:10px;color:var(--dim);">${d.slice(4,6)}/${d.slice(6,8)}</span></div>`;}).join("")}
+        </div>
+        <div style="display:flex;justify-content:space-around;font-size:11.5px;font-weight:700;margin-top:14px;border-top:1px solid #ffffff0d;padding-top:12px;">
+          <span>적중 <b style="color:#6bbf9c;">${wOk}</b></span><span>오답 <b style="color:#cf888f;">${wNo}</b></span><span>적중률 <b style="color:var(--gold);">${wOk+wNo?Math.round(wOk/(wOk+wNo)*100):0}%</b></span></div>`
+        : `<div style="font-size:11.5px;color:var(--dim);padding:8px 0;text-align:center;">채점 기록이 쌓이면 표시됩니다.</div>`}
+      </div>
+    </div>
+  </div>
+  <div id="rankall" class="modal" onclick="if(event.target===this)this.style.display='none'">
+    <div class="pn" style="width:min(420px,92vw);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <b style="font-size:16px;">🏆 적중 랭킹 전체</b>
+        <span style="cursor:pointer;color:var(--muted);padding:2px 6px;font-size:16px;" onclick="document.getElementById('rankall').style.display='none'">✕</span></div>
+      <div id="ranksfull">불러오는 중...</div>
+    </div>
+  </div>`;
+
+  document.querySelectorAll(".pickbtn:not(:disabled)").forEach(b=>b.addEventListener("click", async ()=>{
+    const m = b.dataset.m, pick = b.dataset.p;
+    // 클릭 시점 실시간 기준가 기록
+    try { const ts = await jget("https://api.upbit.com/v1/ticker?markets="+m); TICK[m]=ts[0]; } catch(e){}
+    if (!G.preds[DDATE]) G.preds[DDATE] = { picks:{}, price0:{} };
+    G.preds[DDATE].picks[m] = pick;
+    G.preds[DDATE].price0[m] = TICK[m].trade_price;
+    await db().collection(COL).doc(USER.uid).set(G, { merge:true });
+    render();
+  }));
+  loadRanks();
+}
+
+async function loadRanks(){
+  const el = $("ranks");
+  if (!el) return;
+  try {
+    const snap = await db().collection(COL).orderBy("hit","desc").limit(50).get();
+    const rows = [];
+    snap.forEach(d=>{ const v=d.data(); if(v.total) rows.push({uid:d.id, ...v}); });
+    const row = (r,i)=>`<div class="rkrow ${USER&&r.uid===USER.uid?"me":""}">
+      <span class="rank">${i<3?["🥇","🥈","🥉"][i]:i+1}</span>
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${(r.nick||"익명").replace(/</g,"&lt;")}</span>
+      <span class="num" style="color:var(--gold);">${Math.round(r.hit/r.total*100)}%</span>
+      <span class="num" style="color:var(--dim);font-size:11px;">${r.hit}/${r.total}</span></div>`;
+    const myIdx = USER ? rows.findIndex(r=>r.uid===USER.uid) : -1;
+    el.innerHTML = (rows.slice(0,5).map(row).join("")
+      + (myIdx>=0?`<div style="font-size:11px;color:var(--dim);font-weight:700;text-align:center;margin-top:8px;">내 순위: <b style="color:var(--gold);">${myIdx+1}위</b></div>`:""))
+      || `<div style="font-size:12px;color:var(--dim);">첫 예측의 주인공이 되어보세요!</div>`;
+    const fl = $("ranksfull");
+    if (fl) fl.innerHTML = rows.map(row).join("") || `<div style="font-size:12px;color:var(--dim);">기록이 없습니다.</div>`;
+  } catch(e){ el.innerHTML = `<div style="font-size:12px;color:var(--dim);">랭킹을 불러오지 못했습니다.</div>`; }
+}
+</script>
+</body>
+</html>
