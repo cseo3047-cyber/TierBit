@@ -91,13 +91,13 @@ let NAMES = {}, LIST = [], Q = "";
 // ── 사이드바: 코인 목록 (거래대금 순)
 async function loadSide(){
   try {
-    const all = await jget("https://api.upbit.com/v1/market/all?isDetails=false");
+    const all = await jget("https://upbit-proxy.kon523.workers.dev/v1/market/all?isDetails=false");
     const krw = all.filter(m=>m.market.startsWith("KRW-"));
     krw.forEach(m=>NAMES[m.market]=m.korean_name);
     const mkts = krw.map(m=>m.market);
     const ts = [];
     for (let i=0; i<mkts.length; i+=99)
-      ts.push(...await jget("https://api.upbit.com/v1/ticker?markets="+mkts.slice(i,i+99).join(",")));
+      ts.push(...await jget("https://upbit-proxy.kon523.workers.dev/v1/ticker?markets="+mkts.slice(i,i+99).join(",")));
     LIST = ts.map(t=>({ m:t.market, nm:NAMES[t.market]||t.market, sy:t.market.replace("KRW-",""), chg:(t.signed_change_rate||0)*100, amt:t.acc_trade_price_24h||0 }))
              .sort((a,b)=>b.amt-a.amt);
     drawSide();
@@ -132,7 +132,7 @@ async function upbitPages(path, maxPages){
   // 업비트 캔들 페이지네이션: to=가장 오래된 봉 시각(UTC) 으로 거슬러 올라감
   let out = [], to = "";
   for (let i=0; i<maxPages; i++){
-    const rows = await jget(`https://api.upbit.com/v1/candles/${path}?market=${CUR}&count=200${to?"&to="+encodeURIComponent(to):""}`);
+    const rows = await jget(`https://upbit-proxy.kon523.workers.dev/v1/candles/${path}?market=${CUR}&count=200${to?"&to="+encodeURIComponent(to):""}`);
     if (!rows.length) break;
     out = out.concat(rows);
     if (rows.length < 200) break;

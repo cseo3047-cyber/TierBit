@@ -181,7 +181,7 @@ const COL_ICO = ["#f7931a","#627eea","#23b8e0","#9945ff","#0033ad","#c2a633","#e
 
 let NAMES = {}, POOL = [], QS = [], TICK = {}, SPKS = {};
 async function initData(){
-  const all = await jget("https://api.upbit.com/v1/market/all?isDetails=false");
+  const all = await jget("https://upbit-proxy.kon523.workers.dev/v1/market/all?isDetails=false");
   all.filter(m=>m.market.startsWith("KRW-")).forEach(m=>NAMES[m.market]=m.korean_name);
   POOL = CAND.filter(m=>NAMES[m]);
   QS = [];
@@ -189,11 +189,11 @@ async function initData(){
     const m = POOL[hashOf(DDATE+":"+i) % POOL.length];
     if (!QS.includes(m)) QS.push(m);
   }
-  const ts = await jget("https://api.upbit.com/v1/ticker?markets="+QS.join(","));
+  const ts = await jget("https://upbit-proxy.kon523.workers.dev/v1/ticker?markets="+QS.join(","));
   ts.forEach(t=>TICK[t.market]=t);
   // 미니 차트: 최근 30일 종가
   await Promise.all(QS.map(async m=>{
-    try { const rows = await jget(`https://api.upbit.com/v1/candles/days?market=${m}&count=30`);
+    try { const rows = await jget(`https://upbit-proxy.kon523.workers.dev/v1/candles/days?market=${m}&count=30`);
       SPKS[m] = rows.reverse().map(c=>+c.trade_price); } catch(e){ SPKS[m]=null; }
   }));
 }
@@ -217,7 +217,7 @@ async function judge(G){
   if (!days.length) return null;
   const mkts = [...new Set(days.flatMap(dk=>Object.keys(G.preds[dk].picks||{})))];
   if (!mkts.length){ days.forEach(dk=>G.preds[dk].done=true); return null; }
-  const ts = await jget("https://api.upbit.com/v1/ticker?markets="+mkts.join(","));
+  const ts = await jget("https://upbit-proxy.kon523.workers.dev/v1/ticker?markets="+mkts.join(","));
   const cur = {}; ts.forEach(t=>cur[t.market]=t.trade_price);
   const judged = [];
   let hit=G.hit||0, total=G.total||0, pstreak=G.pstreak||0, pbest=G.pbest||0;
@@ -379,7 +379,7 @@ function render(){
   document.querySelectorAll(".pickbtn:not(:disabled)").forEach(b=>b.addEventListener("click", async ()=>{
     const m = b.dataset.m, pick = b.dataset.p;
     // 클릭 시점 실시간 기준가 기록
-    try { const ts = await jget("https://api.upbit.com/v1/ticker?markets="+m); TICK[m]=ts[0]; } catch(e){}
+    try { const ts = await jget("https://upbit-proxy.kon523.workers.dev/v1/ticker?markets="+m); TICK[m]=ts[0]; } catch(e){}
     if (!G.preds[DDATE]) G.preds[DDATE] = { picks:{}, price0:{} };
     G.preds[DDATE].picks[m] = pick;
     G.preds[DDATE].price0[m] = TICK[m].trade_price;

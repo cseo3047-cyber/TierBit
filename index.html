@@ -189,7 +189,7 @@ function scoreCoin(t){
 // ── 데이터 로딩 (업비트 공개 API)
 async function jget(url){ const r = await fetch(url); if(!r.ok) throw new Error(url+" "+r.status); return r.json(); }
 async function loadMarkets(){
-  const all = await jget("https://api.upbit.com/v1/market/all?isDetails=false");
+  const all = await jget("https://upbit-proxy.kon523.workers.dev/v1/market/all?isDetails=false");
   const krw = all.filter(m=>m.market.startsWith("KRW-"));
   krw.forEach(m=>NAMES[m.market]=m.korean_name);
   return krw.map(m=>m.market);
@@ -198,7 +198,7 @@ async function loadTickers(markets){
   const out = [];
   for (let i=0; i<markets.length; i+=99){
     const chunk = markets.slice(i, i+99);
-    out.push(...await jget("https://api.upbit.com/v1/ticker?markets="+chunk.join(",")));
+    out.push(...await jget("https://upbit-proxy.kon523.workers.dev/v1/ticker?markets="+chunk.join(",")));
   }
   return out;
 }
@@ -320,7 +320,7 @@ async function loadCandles(){
   drawTf();
   $("cvlegend2").textContent = "불러오는 중…";
   try {
-    const rows = await jget(`https://api.upbit.com/v1/candles/${tf[1]}?market=${CV.mkt}&count=${tf[2]}`);
+    const rows = await jget(`https://upbit-proxy.kon523.workers.dev/v1/candles/${tf[1]}?market=${CV.mkt}&count=${tf[2]}`);
     CV.bars = rows.reverse().map(c=>({
       d: String(c.candle_date_time_kst||""),
       o:+c.opening_price, h:+c.high_price, l:+c.low_price, c:+c.trade_price,

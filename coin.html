@@ -147,13 +147,13 @@ function scoreCoin(t){
 async function load(first){
   try {
     if (first){
-      const all = await jget("https://api.upbit.com/v1/market/all?isDetails=false");
+      const all = await jget("https://upbit-proxy.kon523.workers.dev/v1/market/all?isDetails=false");
       const m = all.find(x=>x.market===MKT);
       if (m) NAME = m.korean_name;
       document.title = "TierBit — " + NAME;
       $("fulllink").href = "chart.html?c="+encodeURIComponent(MKT);
     }
-    const ts = await jget("https://api.upbit.com/v1/ticker?markets="+MKT);
+    const ts = await jget("https://upbit-proxy.kon523.workers.dev/v1/ticker?markets="+MKT);
     T = ts[0];
     const s = scoreCoin(T), g = gradeOf(s.sc);
     $("hd").innerHTML = `<span class="nm">${NAME}</span><span class="sym">${MKT.replace("KRW-","")} · 원화마켓</span>
@@ -191,7 +191,7 @@ async function loadCandles(){
   drawTf();
   $("legend").textContent = "불러오는 중…";
   try {
-    const rows = await jget(`https://api.upbit.com/v1/candles/${tf[1]}?market=${MKT}&count=${tf[2]}`);
+    const rows = await jget(`https://upbit-proxy.kon523.workers.dev/v1/candles/${tf[1]}?market=${MKT}&count=${tf[2]}`);
     CV.bars = rows.reverse().map(c=>({
       d: String(c.candle_date_time_kst||""),
       o:+c.opening_price, h:+c.high_price, l:+c.low_price, c:+c.trade_price,
