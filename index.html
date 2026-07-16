@@ -151,6 +151,17 @@ const eok = v => v >= 1e12 ? (v/1e12).toFixed(2)+"조" : num(v/1e8)+"억";
 const cls = v => v>0?"up":v<0?"down":"flat";
 const GR = [["AAA",85],["AA",75],["A",65],["BBB",55],["BB",45],["B",35],["CCC",25],["C",10],["D",0]];
 const gradeOf = sc => GR.find(g=>sc>=g[1])[0];
+// ── 코인 로고 (cryptocurrency-icons · CC0 퍼블릭 도메인 → 상업 이용 자유) + 없으면 이니셜 아바타
+const ICOB = "https://cdn.jsdelivr.net/npm/cryptocurrency-icons@0.18.1/svg/color/";
+const AVC = ["#f0c948","#4cd7a5","#4cc4ff","#c77dff","#f0708a","#f0a818"];
+window.cofb = (img, sym, size) => {
+  const c = AVC[(sym.charCodeAt(0)+sym.length) % AVC.length];
+  const s = document.createElement("span");
+  s.style.cssText = `display:inline-flex;width:${size}px;height:${size}px;border-radius:50%;background:${c}22;border:1px solid ${c}66;color:${c};font-size:${Math.max(8,Math.round(size*0.38))}px;font-weight:800;align-items:center;justify-content:center;flex-shrink:0;vertical-align:middle;`;
+  s.textContent = sym.slice(0,2);
+  img.replaceWith(s);
+};
+const coinIco = (sym, size) => `<img src="${ICOB}${sym.toLowerCase()}.svg" alt="" style="width:${size}px;height:${size}px;border-radius:50%;vertical-align:middle;flex-shrink:0;" loading="lazy" onerror="cofb(this,'${sym}',${size})">`;
 
 let NAMES = {};      // KRW-BTC → 비트코인
 let ROWS = [];       // 계산된 코인 목록
@@ -242,8 +253,8 @@ function drawCards(){
   if (btc && BTC_USD && FX) kimchi = (btc.trade_price/(BTC_USD*FX)-1)*100;
   const cc = (lb,vl,sub,subCls) => `<div class="scard"><div class="lb">${lb}</div><div class="vl num">${vl}</div><div class="sub num ${subCls||""}">${sub}</div></div>`;
   $("cards").innerHTML =
-    (btc ? cc("₿ 비트코인", money(btc.trade_price), (btc.chg>=0?"▲ +":"▼ ")+btc.chg.toFixed(2)+"% (24h)", cls(btc.chg)) : "") +
-    (eth ? cc("Ξ 이더리움", money(eth.trade_price), (eth.chg>=0?"▲ +":"▼ ")+eth.chg.toFixed(2)+"% (24h)", cls(eth.chg)) : "") +
+    (btc ? cc(coinIco("BTC",16)+" 비트코인", money(btc.trade_price), (btc.chg>=0?"▲ +":"▼ ")+btc.chg.toFixed(2)+"% (24h)", cls(btc.chg)) : "") +
+    (eth ? cc(coinIco("ETH",16)+" 이더리움", money(eth.trade_price), (eth.chg>=0?"▲ +":"▼ ")+eth.chg.toFixed(2)+"% (24h)", cls(eth.chg)) : "") +
     cc("💰 24h 거래대금 (원화마켓)", amtStr(totalAmt), `상승 ${upN} · 하락 ${dnN}`, "") +
     (kimchi!=null
       ? cc("🇰🇷 김치 프리미엄 (BTC)", (kimchi>=0?"+":"")+kimchi.toFixed(2)+"%", `바이낸스 $${num(BTC_USD)} · 환율 ${num(FX)}원`, cls(kimchi))
@@ -287,7 +298,7 @@ function drawTbl(){
     const rc = r.rk>=70?"background:#3a1a22;color:#f0708a;":r.rk>=40?"background:#3d3313;color:#f0c948;":"background:#13322a;color:#4cd7a5;";
     return `<tr onclick="openChart('${r.market}')" title="클릭하면 차트가 열려요">
       <td class="num" style="color:var(--muted);">${i+1}</td>
-      <td class="nm">${r.nm}<span class="sym">${r.symb}</span></td>
+      <td class="nm">${coinIco(r.symb,20)} ${r.nm}<span class="sym">${r.symb}</span></td>
       <td class="num" style="font-weight:700;">${money(r.trade_price)}</td>
       <td class="num ${cls(r.chg)}" style="font-weight:800;">${r.chg>=0?"+":""}${r.chg.toFixed(2)}%</td>
       <td class="num" style="color:var(--muted);">${amtStr(r.amt)}</td>
@@ -322,7 +333,7 @@ const ccv = $("ccv"), cctx = ccv.getContext("2d");
 window.openChart = async market => {
   const r = ROWS.find(x=>x.market===market);
   CV.mkt = market;
-  $("cvt2").innerHTML = (r?r.nm:market) + ` <span class="sym">${market.replace("KRW-","")}</span>`;
+  $("cvt2").innerHTML = coinIco(market.replace("KRW-",""),22) + " " + (r?r.nm:market) + ` <span class="sym">${market.replace("KRW-","")}</span>`;
   $("upbtn").dataset.u = "https://upbit.com/exchange?code=CRIX.UPBIT."+market;
   $("dtbtn").dataset.m = market;
   $("cmodal").style.display = "flex";

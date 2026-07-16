@@ -100,6 +100,16 @@ window.setCur = c => { CURR=c; try{localStorage.setItem("tb_cur",c);}catch(e){} 
 function drawCurChips(){
   $("curchips").innerHTML = `<span class="${CURR==="krw"?"on":""}" onclick="setCur('krw')">₩</span><span class="${CURR==="usd"?"on":""}" onclick="setCur('usd')">$</span>`;
 }
+const ICOB = "https://cdn.jsdelivr.net/npm/cryptocurrency-icons@0.18.1/svg/color/";
+const AVC = ["#f0c948","#4cd7a5","#4cc4ff","#c77dff","#f0708a","#f0a818"];
+window.cofb = (img, sym, size) => {
+  const c = AVC[(sym.charCodeAt(0)+sym.length) % AVC.length];
+  const s = document.createElement("span");
+  s.style.cssText = `display:inline-flex;width:${size}px;height:${size}px;border-radius:50%;background:${c}22;border:1px solid ${c}66;color:${c};font-size:${Math.max(8,Math.round(size*0.38))}px;font-weight:800;align-items:center;justify-content:center;flex-shrink:0;vertical-align:middle;`;
+  s.textContent = sym.slice(0,2);
+  img.replaceWith(s);
+};
+const coinIco = (sym, size) => `<img src="${ICOB}${sym.toLowerCase()}.svg" alt="" style="width:${size}px;height:${size}px;border-radius:50%;vertical-align:middle;flex-shrink:0;" loading="lazy" onerror="cofb(this,'${sym}',${size})">`;
 
 // ── 사이드바: 코인 목록 (거래대금 순)
 async function loadSide(){
@@ -122,7 +132,7 @@ function drawSide(){
   if (Q){ const qU=Q.toUpperCase(); p = p.filter(r=>r.nm.includes(Q)||r.sy.includes(qU)); }
   $("clist").innerHTML = p.slice(0,80).map(r=>
     `<div class="crow ${r.m===CUR?"on":""}" onclick="pick('${r.m}')">
-      <span class="n">${r.nm} <span class="s">${r.sy}</span></span>
+      ${coinIco(r.sy,18)}<span class="n">${r.nm} <span class="s">${r.sy}</span></span>
       <span class="c ${r.chg>0?"up":r.chg<0?"down":"flat"}">${r.chg>=0?"+":""}${r.chg.toFixed(2)}%</span>
     </div>`).join("") || `<div style="padding:16px;font-size:12px;color:var(--dim);">검색 결과 없음</div>`;
 }
@@ -130,7 +140,7 @@ $("q").addEventListener("input", e=>{ Q=e.target.value.trim(); drawSide(); });
 window.pick = m => { CUR=m; setTitle(); drawSide(); loadCandles(); history.replaceState(null,"","chart.html?c="+encodeURIComponent(m)); };
 function setTitle(){
   const nm = NAMES[CUR]||CUR;
-  $("cvt").innerHTML = nm + ` <span style="font-size:11px;color:var(--dim);font-weight:600;">${CUR.replace("KRW-","")}</span>`;
+  $("cvt").innerHTML = coinIco(CUR.replace("KRW-",""),22) + " " + nm + ` <span style="font-size:11px;color:var(--dim);font-weight:600;">${CUR.replace("KRW-","")}</span>`;
   document.title = "TierBit — " + nm + " 차트";
 }
 

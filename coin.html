@@ -112,6 +112,16 @@ const eok = v => v >= 1e12 ? (v/1e12).toFixed(2)+"조" : num(v/1e8)+"억";
 const cls = v => v>0?"up":v<0?"down":"flat";
 const GR = [["AAA",85],["AA",75],["A",65],["BBB",55],["BB",45],["B",35],["CCC",25],["C",10],["D",0]];
 const gradeOf = sc => GR.find(g=>sc>=g[1])[0];
+const ICOB = "https://cdn.jsdelivr.net/npm/cryptocurrency-icons@0.18.1/svg/color/";
+const AVC = ["#f0c948","#4cd7a5","#4cc4ff","#c77dff","#f0708a","#f0a818"];
+window.cofb = (img, sym, size) => {
+  const c = AVC[(sym.charCodeAt(0)+sym.length) % AVC.length];
+  const s = document.createElement("span");
+  s.style.cssText = `display:inline-flex;width:${size}px;height:${size}px;border-radius:50%;background:${c}22;border:1px solid ${c}66;color:${c};font-size:${Math.max(8,Math.round(size*0.38))}px;font-weight:800;align-items:center;justify-content:center;flex-shrink:0;vertical-align:middle;`;
+  s.textContent = sym.slice(0,2);
+  img.replaceWith(s);
+};
+const coinIco = (sym, size) => `<img src="${ICOB}${sym.toLowerCase()}.svg" alt="" style="width:${size}px;height:${size}px;border-radius:50%;vertical-align:middle;flex-shrink:0;" loading="lazy" onerror="cofb(this,'${sym}',${size})">`;
 async function jget(url){ const r = await fetch(url); if(!r.ok) throw new Error(url+" "+r.status); return r.json(); }
 
 const MKT = new URLSearchParams(location.search).get("c") || "KRW-BTC";
@@ -157,7 +167,7 @@ async function load(first){
     const ts = await jget("https://upbit-proxy.kon523.workers.dev/v1/ticker?markets="+MKT);
     T = ts[0];
     const s = scoreCoin(T), g = gradeOf(s.sc);
-    $("hd").innerHTML = `<span class="nm">${NAME}</span><span class="sym">${MKT.replace("KRW-","")} · 원화마켓</span>
+    $("hd").innerHTML = `${coinIco(MKT.replace("KRW-",""),34)}<span class="nm">${NAME}</span><span class="sym">${MKT.replace("KRW-","")} · 원화마켓</span>
       <span class="tierb t-${g}">${g}</span>
       <button class="upbtn" onclick="window.open('https://upbit.com/exchange?code=CRIX.UPBIT.${MKT}','_blank')">업비트에서 보기 ↗</button>`;
     const hiD = (T.highest_52_week_date||"").replaceAll("-","."), loD = (T.lowest_52_week_date||"").replaceAll("-",".");
