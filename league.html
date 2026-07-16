@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TierBit — 모의투자 리그</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27><rect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%230a1a22%27/><rect x=%276%27 y=%2716%27 width=%275%27 height=%2710%27 rx=%272%27 fill=%27%234cd7a5%27/><rect x=%2713.5%27 y=%279%27 width=%275%27 height=%2717%27 rx=%272%27 fill=%27%23f0c948%27/><rect x=%2721%27 y=%2712%27 width=%275%27 height=%2714%27 rx=%272%27 fill=%27%234cd7a5%27/></svg>">
+<style>
+  :root {
+    --bg:#0a1620; --panel:#10231c; --panel2:#0d2733; --border:#1c3a33;
+    --text:#e8f4f8; --muted:#9db8a9; --dim:#5a737d;
+    --gold:#f0c948; --gold-dim:#c9a832; --up:#4cd7a5; --down:#f0645a;
+  }
+  * { margin:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",-apple-system,sans-serif; font-size:14px; }
+  a { color:inherit; text-decoration:none; }
+  .num { font-variant-numeric:tabular-nums; }
+  .up { color:var(--up); } .down { color:var(--down); } .flat { color:var(--muted); }
+  .nav { display:flex; align-items:center; gap:14px; padding:13px 22px; border-bottom:1px solid var(--border); background:#0a1a22; position:sticky; top:0; z-index:100; flex-wrap:wrap; }
+  .brand { display:flex; align-items:center; gap:9px; font-size:20px; font-weight:800; letter-spacing:.3px; }
+  .brand .mark { display:flex; align-items:flex-end; gap:2px; height:20px; }
+  .brand .mark i { display:block; width:5px; border-radius:2px; background:var(--gold); }
+  .brand .mark i:nth-child(1){height:10px;background:var(--up);} .brand .mark i:nth-child(2){height:16px;} .brand .mark i:nth-child(3){height:13px;background:var(--up);}
+  .nlink { font-size:13px; font-weight:700; color:var(--muted); padding:6px 10px; border-radius:8px; }
+  .nlink:hover { color:var(--text); background:#ffffff0d; }
+  .nlink.on { color:var(--gold); }
+  #loginbtn { margin-left:auto; background:transparent; border:1px solid var(--border); color:var(--muted); border-radius:9px; padding:7px 15px; font-size:12px; font-weight:800; cursor:pointer; }
+  .wrap { max-width:1240px; margin:0 auto; padding:22px 18px 30px; }
+  .page-title { font-size:26px; font-weight:800; margin-bottom:6px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  .page-sub { font-size:13px; color:var(--muted); margin-bottom:18px; line-height:1.7; }
+  .rulebtn { background:transparent; border:1px solid var(--border); color:var(--muted); border-radius:8px; padding:6px 13px; font-size:11.5px; font-weight:800; cursor:pointer; }
+  .rulebtn:hover { color:var(--gold); border-color:var(--gold-dim); }
+  .card { background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:17px 19px; min-width:0; }
+  .card h3 { font-size:14.5px; font-weight:800; margin-bottom:12px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .card h3 .more { margin-left:auto; font-size:11px; color:var(--dim); font-weight:700; }
+  .statgrid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-bottom:14px; }
+  @media (max-width:900px){ .statgrid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+  .sbox2 { background:linear-gradient(135deg,#0d2e3b,#123f4b); border:1px solid var(--border); border-radius:14px; padding:14px 16px; display:flex; align-items:center; gap:12px; min-width:0; }
+  .sbox2 .ic { width:44px; height:44px; border-radius:13px; display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0; background:rgba(255,255,255,.06); }
+  .sbox2 .lb { font-size:11.5px; color:var(--muted); font-weight:700; }
+  .sbox2 .vl { font-size:18px; font-weight:800; margin-top:3px; line-height:1.2; white-space:nowrap; }
+  .sbox2 .sub { font-size:10.5px; color:var(--dim); margin-top:3px; }
+  .layout { display:grid; grid-template-columns:1fr 340px; gap:14px; align-items:start; }
+  @media (max-width:1020px){ .layout { grid-template-columns:1fr; } }
+  .colL, .colR { display:flex; flex-direction:column; gap:14px; min-width:0; }
+  .frow { display:flex; gap:10px; align-items:center; margin-bottom:10px; flex-wrap:wrap; }
+  .frow label { font-size:12px; color:var(--muted); font-weight:700; width:56px; flex-shrink:0; }
+  .frow input, .frow select { flex:1; min-width:120px; padding:9px 12px; font-size:13px; background:var(--panel2); border:1.5px solid var(--border); border-radius:9px; color:var(--text); outline:none; }
+  .frow input:focus, .frow select:focus { border-color:var(--gold-dim); }
+  .buybtn, .sellbtn { flex:1; padding:11px; border-radius:10px; border:none; font-size:13.5px; font-weight:800; cursor:pointer; }
+  .buybtn { background:#1d9e75; color:#fff; } .buybtn:hover { background:#24b586; }
+  .sellbtn { background:#b0454f; color:#fff; } .sellbtn:hover { background:#c95560; }
+  table.pt { width:100%; border-collapse:collapse; font-size:12px; }
+  table.pt th { text-align:center; color:var(--dim); font-size:10.5px; font-weight:700; padding:7px 4px; border-bottom:1px solid var(--border); white-space:nowrap; }
+  table.pt td { padding:9px 4px; border-bottom:1px solid #ffffff0d; text-align:center; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  table.pt td.nm { text-align:left; font-weight:700; }
+  .trrow { display:flex; align-items:center; gap:9px; padding:8px 2px; border-bottom:1px solid #ffffff0d; font-size:12px; }
+  .trrow:last-child { border-bottom:none; }
+  .donut { width:150px; height:150px; border-radius:50%; position:relative; flex-shrink:0; margin:0 auto; }
+  .donut .hole { position:absolute; inset:22px; background:var(--panel); border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  .lgd { display:flex; flex-wrap:wrap; gap:7px 13px; justify-content:center; margin-top:13px; font-size:11px; color:var(--muted); font-weight:700; }
+  .lgd i { display:inline-block; width:9px; height:9px; border-radius:3px; margin-right:5px; }
+  .rkrow { display:flex; align-items:center; gap:9px; padding:8px 6px; border-bottom:1px solid #ffffff0d; font-size:12.5px; font-weight:700; }
+  .rkrow:last-child { border-bottom:none; }
+  .rkrow .rank { width:22px; text-align:center; flex-shrink:0; font-size:13px; font-weight:800; color:var(--muted); }
+  .rkrow.me { background:#3d331322; border-radius:8px; }
+  .tierbadge { display:inline-flex; align-items:center; gap:6px; padding:5px 13px; border-radius:9px; font-size:12.5px; font-weight:800; }
+  .footer { max-width:1240px; margin:18px auto 0; padding:15px 18px 26px; font-size:11.5px; color:var(--muted); border-top:1px solid var(--border); line-height:2.0; text-align:center; }
+  .modal { position:fixed; inset:0; background:#000000aa; display:none; align-items:center; justify-content:center; z-index:300; }
+  .modal .pn { background:var(--panel); border:1px solid var(--border); border-radius:16px; width:min(380px,92vw); max-height:82vh; overflow:auto; padding:24px; }
+  .smrow { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:8px 2px; border-bottom:1px solid #ffffff0d; font-size:12.5px; }
+  .smrow:last-child { border-bottom:none; }
+  .smrow .k { color:var(--muted); font-weight:600; }
+  .smrow b { font-variant-numeric:tabular-nums; }
+  #trcv { width:100%; height:120px; display:block; }
+</style>
+</head>
+<body>
+<nav class="nav">
+  <a class="brand" href="index.html"><span class="mark"><i></i><i></i><i></i></span>TierBit</a>
+  <a class="nlink" href="index.html">홈</a>
+  <a class="nlink" href="chart.html">차트</a>
+  <a class="nlink" href="predict.html">예측게임</a>
+  <a class="nlink" href="attend.html">출석체크</a>
+  <a class="nlink on" href="league.html">리그</a>
+  <a class="nlink" href="mypage.html">마이페이지</a>
+  <button id="loginbtn">로그인</button>
+</nav>
+<div class="wrap">
+  <div class="page-title">🏆 모의투자 리그 <button class="rulebtn" onclick="document.getElementById('rulemodal').style.display='flex'">게임 규칙</button></div>
+  <div class="page-sub">가상 자금으로 실시간 코인 투자에 도전하세요. 매월 기본 2,000만 원 + 출석 포인트 1P당 100만 원이 지급됩니다. (실제 돈이 아니며 현금 가치가 없습니다)</div>
+  <div id="body"><div class="card" style="text-align:center;padding:40px;color:var(--muted);">로그인 상태 확인 중...</div></div>
+  <div class="footer">
+    ⓘ 모의투자 리그는 오락용 콘텐츠로 투자 권유가 아니며, 가상 자금은 현금 가치가 없습니다. 시세: 업비트 공개 API · 수수료 0.05% 반영<br>
+    © 2026 TierBit. All rights reserved.
+  </div>
+</div>
+
+<div class="modal" id="rulemodal" onclick="if(event.target===this)this.style.display='none'">
+  <div class="pn">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <b style="font-size:16px;">📜 게임 규칙</b>
+      <span style="cursor:pointer;color:var(--muted);padding:2px 6px;font-size:16px;" onclick="document.getElementById('rulemodal').style.display='none'">✕</span></div>
+    <div class="smrow"><span class="k">시작 자금</span><b>2,000만 원 + 출석 포인트×100만 원</b></div>
+    <div class="smrow"><span class="k">월 지급금</span><b>매월 첫 접속 시 자동 지급 (동일 기준)</b></div>
+    <div class="smrow"><span class="k">체결</span><b>업비트 실시간 시세 · 즉시 체결</b></div>
+    <div class="smrow"><span class="k">수수료</span><b>매수·매도 각 0.05%</b></div>
+    <div class="smrow"><span class="k">랭킹</span><b>수익률 · 총자산 (실시간 집계)</b></div>
+    <div class="smrow"><span class="k">티어</span><b>누적 수익률 기준 아이언 ~ 챌린저</b></div>
+    <div style="font-size:10.5px;color:var(--dim);margin-top:11px;line-height:1.8;">수익률 = (총자산 − 누적 지급금) ÷ 누적 지급금. 계정 초기화는 지원하지 않으며, 지급금은 되돌릴 수 없어요.</div>
+  </div>
+</div>
+
+<div class="modal" id="cfmodal" onclick="if(event.target===this)this.style.display='none'">
+  <div class="pn">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <b style="font-size:16px;" id="cf_title"></b>
+      <span style="cursor:pointer;color:var(--muted);padding:2px 6px;font-size:16px;" onclick="document.getElementById('cfmodal').style.display='none'">✕</span></div>
+    <div id="cf_body"></div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button id="cf_ok" style="flex:1;padding:11px;border-radius:10px;border:none;color:#fff;font-weight:800;font-size:13px;cursor:pointer;"></button>
+      <button onclick="document.getElementById('cfmodal').style.display='none'" style="padding:11px 18px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--muted);font-weight:800;font-size:13px;cursor:pointer;">취소</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="loginmodal">
+  <div class="pn" style="width:min(360px,92vw);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <b style="font-size:16px;">로그인</b><span style="cursor:pointer;color:var(--muted);padding:2px 6px;" onclick="document.getElementById('loginmodal').style.display='none'">✕</span></div>
+    <button id="googlelogin" style="width:100%;padding:11px;border-radius:10px;border:1px solid var(--border);background:#fff;color:#1a1a1a;font-weight:800;font-size:13px;cursor:pointer;">Google 계정으로 로그인</button>
+    <div style="display:flex;align-items:center;gap:10px;margin:14px 0;color:var(--dim);font-size:11px;"><span style="flex:1;height:1px;background:var(--border);"></span>또는<span style="flex:1;height:1px;background:var(--border);"></span></div>
+    <input id="lmemail" type="email" placeholder="이메일" autocomplete="username" style="width:100%;padding:10px 12px;margin-bottom:8px;border-radius:9px;border:1px solid var(--border);background:var(--panel2);color:var(--text);outline:none;font-size:13px;">
+    <input id="lmpw" type="password" placeholder="비밀번호" autocomplete="current-password" style="width:100%;padding:10px 12px;border-radius:9px;border:1px solid var(--border);background:var(--panel2);color:var(--text);outline:none;font-size:13px;">
+    <button id="emaillogin" style="width:100%;padding:11px;border-radius:10px;border:none;background:#1d9e75;color:#fff;font-weight:800;font-size:13px;cursor:pointer;margin-top:10px;">이메일로 로그인</button>
+    <div id="lmerr" style="color:#f0708a;font-size:11.5px;margin-top:8px;min-height:15px;"></div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const num = v => Math.round(v).toLocaleString("ko-KR");
+const pfmt = p => p==null ? "-" : p >= 100 ? num(p) : p >= 1 ? p.toLocaleString("ko-KR",{minimumFractionDigits:2,maximumFractionDigits:2}) : p.toLocaleString("ko-KR",{minimumFractionDigits:4,maximumFractionDigits:4});
+const cls = v => v>0?"up":v<0?"down":"flat";
+async function jget(url){ const r = await fetch(url); if(!r.ok) throw new Error(url+" "+r.status); return r.json(); }
+const ymd = d => `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}${String(d.getDate()).padStart(2,"0")}`;
+const ymon = d => `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,"0")}`;
+const FEE = 0.0005;
+
+const ICOB = "https://cdn.jsdelivr.net/npm/cryptocurrency-icons@0.18.1/svg/color/";
+const AVC = ["#f0c948","#4cd7a5","#4cc4ff","#c77dff","#f0708a","#f0a818"];
+window.cofb = (img, sym, size) => {
+  const c = AVC[(sym.charCodeAt(0)+sym.length) % AVC.length];
+  const s = document.createElement("span");
+  s.style.cssText = `display:inline-flex;width:${size}px;height:${size}px;border-radius:50%;background:${c}22;border:1px solid ${c}66;color:${c};font-size:${Math.max(8,Math.round(size*0.38))}px;font-weight:800;align-items:center;justify-content:center;flex-shrink:0;vertical-align:middle;`;
+  s.textContent = sym.slice(0,2);
+  img.replaceWith(s);
+};
+const coinIco = (sym, size) => `<img src="${ICOB}${sym.toLowerCase()}.svg" alt="" style="width:${size}px;height:${size}px;border-radius:50%;vertical-align:middle;flex-shrink:0;" loading="lazy" onerror="cofb(this,'${sym}',${size})">`;
+
+firebase.initializeApp({
+  apiKey: "AIzaSyAWwuhXh_maZB5mmsmuKU82XgCMAxEUzVE",
+  authDomain: "stocktier-10c96.firebaseapp.com",
+  projectId: "stocktier-10c96",
+});
+const db = () => firebase.firestore();
+const COL = "coin_league";
+let USER = null, ready = false;
+
+const AUTH_ERR = {
+  "auth/invalid-credential":"이메일 또는 비밀번호가 올바르지 않습니다.","auth/invalid-email":"이메일 형식이 올바르지 않습니다.",
+  "auth/user-not-found":"등록되지 않은 계정입니다.","auth/wrong-password":"비밀번호가 올바르지 않습니다.",
+  "auth/too-many-requests":"시도가 너무 많습니다. 잠시 후 다시 해주세요.","auth/popup-closed-by-user":"로그인 창이 닫혔습니다.",
+};
+const lmerr = m => $("lmerr").textContent = m || "";
+$("loginbtn").addEventListener("click", ()=>{
+  if (USER){ if (confirm("로그아웃할까요?")) firebase.auth().signOut(); }
+  else $("loginmodal").style.display = "flex";
+});
+$("loginmodal").addEventListener("click", e=>{ if(e.target===$("loginmodal")) $("loginmodal").style.display="none"; });
+$("googlelogin").addEventListener("click", ()=>{
+  lmerr("");
+  firebase.auth().signInWithPopup(new firebase.auth.GoogleAuthProvider())
+    .then(()=>$("loginmodal").style.display="none")
+    .catch(e=>lmerr(AUTH_ERR[e.code]||"로그인에 실패했습니다."));
+});
+const doEmail = () => {
+  lmerr("");
+  firebase.auth().signInWithEmailAndPassword($("lmemail").value.trim(), $("lmpw").value)
+    .then(()=>$("loginmodal").style.display="none")
+    .catch(e=>lmerr(AUTH_ERR[e.code]||"로그인에 실패했습니다."));
+};
+$("emaillogin").addEventListener("click", doEmail);
+$("lmpw").addEventListener("keydown", e=>{ if(e.key==="Enter") doEmail(); });
+firebase.auth().onAuthStateChanged(u => {
+  ready = true; USER = u;
+  $("loginbtn").textContent = u ? (u.displayName || u.email.split("@")[0]) + " ▾" : "로그인";
+  $("loginbtn").style.borderColor = u ? "var(--gold-dim)" : "";
+  $("loginbtn").style.color = u ? "var(--gold)" : "";
+  boot();
+});
+setTimeout(()=>{ if(!ready) locked(); }, 4000);
+
+const box = $("body");
+function locked(){
+  box.innerHTML = `<div class="card" style="text-align:center;padding:50px;">
+    <div style="font-size:28px;margin-bottom:12px;">🔒</div>
+    <div style="font-size:15px;font-weight:800;margin-bottom:6px;">로그인하고 모의투자 리그에 참가하세요</div>
+    <div style="font-size:12px;color:var(--dim);margin-bottom:16px;">가상 자금 2,000만 원으로 시작합니다. 기록은 계정에 저장돼요.</div>
+    <button style="background:transparent;border:1px solid var(--gold-dim);color:var(--gold);border-radius:9px;padding:10px 26px;font-size:13px;font-weight:800;cursor:pointer;" onclick="document.getElementById('loginmodal').style.display='flex'">로그인하기</button></div>`;
+}
+
+// ── 시세
+let NAMES = {}, TICK = {}, MKTS = [];
+async function loadPrices(){
+  if (!MKTS.length){
+    const all = await jget("https://upbit-proxy.kon523.workers.dev/v1/market/all?isDetails=false");
+    const krw = all.filter(m=>m.market.startsWith("KRW-"));
+    krw.forEach(m=>NAMES[m.market]=m.korean_name);
+    MKTS = krw.map(m=>m.market);
+  }
+  const out = [];
+  for (let i=0; i<MKTS.length; i+=99)
+    out.push(...await jget("https://upbit-proxy.kon523.workers.dev/v1/ticker?markets="+MKTS.slice(i,i+99).join(",")));
+  out.forEach(t=>TICK[t.market]=t);
+}
+const px = m => TICK[m] ? TICK[m].trade_price : null;
+
+// ── 리그 데이터
+let G = null;
+const TIERS = [["챌린저",50,"#ffcc00"],["마스터",30,"#c77dff"],["다이아",15,"#4cc4ff"],["플래티넘",7,"#4cd7a5"],["골드",3,"#f0c948"],["실버",0,"#c0ccd4"],["브론즈",-10,"#c98a5a"],["아이언",-101,"#8a8f94"]];
+const tierOf = ret => TIERS.find(t=>ret>=t[1]) || TIERS[TIERS.length-1];
+
+async function getPts(){
+  try { const s = await db().collection("coin_games").doc(USER.uid).get(); return s.exists ? (s.data().pts||0) : 0; }
+  catch(e){ return 0; }
+}
+function totals(){
+  let evalV = 0, cost = 0;
+  for (const m of Object.keys(G.hold||{})){
+    const h = G.hold[m], p = px(m);
+    if (!h.qty) continue;
+    cost += h.avg*h.qty;
+    evalV += (p||h.avg)*h.qty;
+  }
+  const total = G.cash + evalV;
+  const ret = G.paid ? (total/G.paid-1)*100 : 0;
+  return { evalV, cost, total, ret, pl: evalV-cost };
+}
+async function boot(){
+  if (!USER){ locked(); return; }
+  try {
+    await loadPrices();
+    const ref = db().collection(COL).doc(USER.uid);
+    const snap = await ref.get();
+    G = snap.exists ? snap.data() : null;
+    const pts = await getPts();
+    const grant = 20000000 + pts*1000000;
+    const nowM = ymon(new Date());
+    if (!G){
+      G = { cash:grant, paid:grant, hold:{}, trades:[], hist:[], month:nowM, joined:ymd(new Date()) };
+    } else if ((G.month||"") !== nowM){
+      G.cash += grant; G.paid = (G.paid||0)+grant; G.month = nowM;
+      G.lastGrant = grant;
+    }
+    G.nick = USER.displayName || USER.email.split("@")[0];
+    // 총자산 추이: 하루 1회 기록
+    const t = totals();
+    const today = ymd(new Date());
+    G.hist = G.hist || [];
+    if (!G.hist.length || G.hist[G.hist.length-1].d !== today) G.hist.push({ d:today, t:Math.round(t.total) });
+    else G.hist[G.hist.length-1].t = Math.round(t.total);
+    G.hist = G.hist.slice(-120);
+    G.total = Math.round(t.total); G.ret = Math.round(t.ret*100)/100;
+    await ref.set(G, { merge:true });
+    render();
+  } catch(e){
+    box.innerHTML = `<div class="card" style="text-align:center;padding:40px;color:#f0a0b0;">불러오기에 실패했습니다: ${String(e.message||e).slice(0,110)}<br><span style="font-size:11px;color:var(--dim);">Firestore 규칙에 coin_league 허용이 필요할 수 있어요.</span></div>`;
+  }
+}
+
+let SEL = "KRW-BTC", QTY = "";
+function render(){
+  const t = totals();
+  const tier = tierOf(t.ret);
+  const holds = Object.keys(G.hold||{}).filter(m=>G.hold[m].qty>0);
+
+  box.innerHTML = `
+  <div class="statgrid">
+    <div class="sbox2"><span class="ic">💰</span>
+      <div style="min-width:0;"><div class="lb">총자산</div><div class="vl num">${num(t.total)}원</div>
+      <div class="sub num">누적 지급금 ${num(G.paid)}원</div></div></div>
+    <div class="sbox2"><span class="ic">💵</span>
+      <div style="min-width:0;"><div class="lb">보유 현금</div><div class="vl num">${num(G.cash)}원</div>
+      <div class="sub num">코인 평가액 ${num(t.evalV)}원</div></div></div>
+    <div class="sbox2"><span class="ic">${t.pl>=0?"📈":"📉"}</span>
+      <div style="min-width:0;"><div class="lb">평가손익</div><div class="vl num ${cls(t.pl)}">${t.pl>=0?"+":""}${num(t.pl)}원</div>
+      <div class="sub num ${cls(t.ret)}">누적 수익률 ${t.ret>=0?"+":""}${t.ret.toFixed(2)}%</div></div></div>
+    <div class="sbox2"><span class="ic">🛡</span>
+      <div style="min-width:0;"><div class="lb">내 티어</div>
+      <div class="vl"><span class="tierbadge" style="background:${tier[2]}22;color:${tier[2]};border:1px solid ${tier[2]}55;">${tier[0]}</span></div>
+      <div class="sub">수익률 기준 · 규칙 참고</div></div></div>
+  </div>
+  <div class="layout">
+    <div class="colL">
+      <div class="card"><h3>⚡ 주문하기 <span class="more num" id="selpx"></span></h3>
+        <div class="frow"><label>코인</label>
+          <input id="csearch" list="clist" placeholder="코인명 · 심볼 검색" autocomplete="off">
+          <datalist id="clist"></datalist></div>
+        <div class="frow"><label>수량</label><input id="qty" type="number" min="0" step="any" placeholder="0.01"></div>
+        <div class="frow"><label>주문금액</label><b class="num" id="ordamt" style="font-size:14px;color:var(--gold);">-</b></div>
+        <div style="display:flex;gap:10px;margin-top:12px;">
+          <button class="buybtn" onclick="confirmOrder('buy')">매수</button>
+          <button class="sellbtn" onclick="confirmOrder('sell')">매도</button>
+        </div>
+        <div id="orderr" style="font-size:11.5px;font-weight:700;color:#f0708a;margin-top:9px;min-height:15px;"></div>
+      </div>
+      <div class="card"><h3>📦 보유 자산</h3>
+        ${holds.length ? `<table class="pt"><thead><tr><th>코인</th><th>수량</th><th>평단가</th><th>현재가</th><th>평가금액</th><th>손익</th></tr></thead><tbody>
+          ${holds.map(m=>{
+            const h=G.hold[m], p=px(m)||h.avg, ev=p*h.qty, pl=(p/h.avg-1)*100;
+            return `<tr><td class="nm">${coinIco(m.replace("KRW-",""),18)} ${NAMES[m]||m}<span style="color:var(--dim);font-size:10px;margin-left:4px;">${m.replace("KRW-","")}</span></td>
+            <td class="num">${h.qty.toLocaleString("ko-KR",{maximumFractionDigits:8})}</td>
+            <td class="num">${pfmt(h.avg)}</td><td class="num">${pfmt(p)}</td>
+            <td class="num" style="font-weight:700;">${num(ev)}원</td>
+            <td class="num ${cls(pl)}" style="font-weight:800;">${pl>=0?"+":""}${pl.toFixed(2)}%</td></tr>`;}).join("")}
+        </tbody></table>` : `<div style="font-size:12px;color:var(--dim);padding:8px 0;">보유한 코인이 없습니다. 첫 매수로 리그를 시작해보세요!</div>`}
+      </div>
+      <div class="card"><h3>📈 총자산 추이 <span class="more num" id="histinfo"></span></h3><canvas id="trcv"></canvas></div>
+      <div class="card"><h3>🧾 최근 거래 내역</h3>
+        ${(G.trades||[]).length ? G.trades.slice(0,8).map(tr=>`
+          <div class="trrow">
+            <span style="font-weight:800;color:${tr.side==="buy"?"#4cd7a5":"#f0708a"};flex-shrink:0;">${tr.side==="buy"?"매수":"매도"}</span>
+            <span style="flex:1;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${coinIco(tr.m.replace("KRW-",""),16)} ${NAMES[tr.m]||tr.m}</span>
+            <span class="num" style="color:var(--muted);">${tr.qty.toLocaleString("ko-KR",{maximumFractionDigits:8})}개</span>
+            <span class="num" style="font-weight:700;">${pfmt(tr.price)}원</span>
+            <span class="num" style="color:var(--dim);font-size:10.5px;flex-shrink:0;">${tr.d}</span>
+          </div>`).join("") : `<div style="font-size:12px;color:var(--dim);padding:8px 0;">아직 거래 내역이 없습니다.</div>`}
+      </div>
+    </div>
+    <div class="colR">
+      <div class="card"><h3>🍩 포트폴리오 구성</h3><div id="donutbox"></div></div>
+      <div class="card"><h3>🏆 수익률 랭킹</h3><div id="rank1">불러오는 중...</div></div>
+      <div class="card"><h3>💎 총자산 랭킹</h3><div id="rank2">불러오는 중...</div></div>
+    </div>
+  </div>`;
+
+  // 검색 datalist
+  const dl = $("clist");
+  dl.innerHTML = MKTS.map(m=>`<option value="${NAMES[m]} (${m.replace("KRW-","")})">`).join("");
+  const cs = $("csearch");
+  cs.value = `${NAMES[SEL]} (${SEL.replace("KRW-","")})`;
+  const resolveSel = () => {
+    const v = cs.value.trim();
+    const m1 = v.match(/\(([A-Z0-9]+)\)\s*$/i);
+    let mk = null;
+    if (m1) mk = "KRW-"+m1[1].toUpperCase();
+    if (!mk || !NAMES[mk]) mk = MKTS.find(m=>NAMES[m]===v) || MKTS.find(m=>m.replace("KRW-","")===v.toUpperCase()) || MKTS.find(m=>NAMES[m] && NAMES[m].includes(v));
+    if (mk && NAMES[mk]) SEL = mk;
+    updOrd();
+  };
+  cs.addEventListener("change", resolveSel);
+  cs.addEventListener("input", resolveSel);
+  const qi = $("qty");
+  qi.value = QTY;
+  qi.addEventListener("input", ()=>{ QTY=qi.value; updOrd(); });
+  updOrd();
+  drawDonut(holds);
+  drawHist();
+  loadRanks();
+}
+function updOrd(){
+  const p = px(SEL), q = parseFloat($("qty").value)||0;
+  $("selpx").textContent = p ? `${NAMES[SEL]} 현재가 ${pfmt(p)}원` : "";
+  $("ordamt").textContent = (p&&q) ? num(p*q)+"원 (수수료 포함 "+num(p*q*(1+FEE))+"원)" : "-";
+}
+
+window.confirmOrder = side => {
+  $("orderr").textContent = "";
+  const p = px(SEL), q = parseFloat($("qty").value)||0;
+  if (!p){ $("orderr").textContent = "코인을 선택해주세요."; return; }
+  if (!(q>0)){ $("orderr").textContent = "수량을 입력해주세요."; return; }
+  if (side==="buy" && p*q*(1+FEE) > G.cash){ $("orderr").textContent = "보유 현금이 부족합니다."; return; }
+  const h = (G.hold||{})[SEL];
+  if (side==="sell" && (!h || h.qty < q)){ $("orderr").textContent = "보유 수량이 부족합니다."; return; }
+  $("cf_title").textContent = (side==="buy"?"🟢 매수":"🔴 매도")+" 확인";
+  $("cf_body").innerHTML =
+    `<div class="smrow"><span class="k">코인</span><b>${NAMES[SEL]} (${SEL.replace("KRW-","")})</b></div>
+     <div class="smrow"><span class="k">수량</span><b class="num">${q.toLocaleString("ko-KR",{maximumFractionDigits:8})}개</b></div>
+     <div class="smrow"><span class="k">체결가 (실시간)</span><b class="num">${pfmt(p)}원</b></div>
+     <div class="smrow"><span class="k">주문금액</span><b class="num">${num(p*q)}원</b></div>
+     <div class="smrow"><span class="k">수수료 (0.05%)</span><b class="num">${num(p*q*FEE)}원</b></div>`;
+  const ok = $("cf_ok");
+  ok.textContent = side==="buy"?"매수 확정":"매도 확정";
+  ok.style.background = side==="buy"?"#1d9e75":"#b0454f";
+  ok.onclick = ()=>doOrder(side, q);
+  $("cfmodal").style.display = "flex";
+};
+async function doOrder(side, q){
+  $("cfmodal").style.display = "none";
+  try {
+    // 최신가로 재조회 후 체결
+    const ts = await jget("https://upbit-proxy.kon523.workers.dev/v1/ticker?markets="+SEL);
+    TICK[SEL] = ts[0];
+    const p = px(SEL);
+    G.hold = G.hold || {};
+    if (side==="buy"){
+      const cost = p*q*(1+FEE);
+      if (cost > G.cash){ $("orderr").textContent = "보유 현금이 부족합니다."; return; }
+      const h = G.hold[SEL] || { qty:0, avg:0 };
+      h.avg = (h.avg*h.qty + p*q) / (h.qty+q);
+      h.qty += q;
+      G.hold[SEL] = h;
+      G.cash -= cost;
+    } else {
+      const h = G.hold[SEL];
+      if (!h || h.qty < q){ $("orderr").textContent = "보유 수량이 부족합니다."; return; }
+      h.qty -= q;
+      if (h.qty < 1e-12) delete G.hold[SEL];
+      G.cash += p*q*(1-FEE);
+    }
+    const now = new Date();
+    const dstr = `${String(now.getMonth()+1).padStart(2,"0")}/${String(now.getDate()).padStart(2,"0")} ${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
+    G.trades = [{ d:dstr, m:SEL, side, qty:q, price:p }].concat(G.trades||[]).slice(0,30);
+    const t = totals();
+    G.total = Math.round(t.total); G.ret = Math.round(t.ret*100)/100;
+    if (G.hist && G.hist.length) G.hist[G.hist.length-1].t = Math.round(t.total);
+    QTY = "";
+    await db().collection(COL).doc(USER.uid).set(G, { merge:false });
+    render();
+  } catch(e){ $("orderr").textContent = "주문 처리 중 오류: "+String(e.message||e).slice(0,60); }
+}
+
+// ── 포트폴리오 도넛
+function drawDonut(holds){
+  const el = $("donutbox");
+  if (!el) return;
+  const t = totals();
+  const parts = holds.map((m,i)=>({ nm:(NAMES[m]||m).slice(0,6), v:(px(m)||G.hold[m].avg)*G.hold[m].qty, c:AVC[i%AVC.length] }));
+  parts.push({ nm:"현금", v:G.cash, c:"#3a4d57" });
+  const tot = parts.reduce((s,p)=>s+p.v,0) || 1;
+  let acc = 0;
+  const segs = parts.map(p=>{ const a0=acc/tot*100; acc+=p.v; const a1=acc/tot*100; return `${p.c} ${a0}% ${a1}%`; }).join(", ");
+  el.innerHTML = `<div class="donut" style="background:conic-gradient(${segs});">
+      <div class="hole"><b class="num" style="font-size:13px;">${num(t.total)}</b><span style="font-size:9px;color:var(--dim);">총자산(원)</span></div></div>
+    <div class="lgd">${parts.map(p=>`<span><i style="background:${p.c};"></i>${p.nm} ${Math.round(p.v/tot*100)}%</span>`).join("")}</div>`;
+}
+
+// ── 총자산 추이
+function drawHist(){
+  const cv = $("trcv");
+  if (!cv || !G.hist || G.hist.length===0) return;
+  const ctx = cv.getContext("2d");
+  const W = cv.clientWidth, H = 120, dpr = window.devicePixelRatio||1;
+  cv.width = W*dpr; cv.height = H*dpr; ctx.setTransform(dpr,0,0,dpr,0,0);
+  const vs = G.hist.map(h=>h.t);
+  let mn = Math.min(...vs), mx = Math.max(...vs);
+  const pad = Math.max(1, (mx-mn)*0.1 || Math.abs(mx)*0.01);
+  mn-=pad; mx+=pad;
+  const X = i => vs.length>1 ? i/(vs.length-1)*(W-8)+4 : W/2;
+  const Y = v => H-14-(v-mn)/(mx-mn)*(H-28);
+  ctx.clearRect(0,0,W,H);
+  ctx.strokeStyle="#12303a"; ctx.lineWidth=1;
+  for (let g=0; g<3; g++){ const y=14+(H-28)*g/2; ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+  const up = vs[vs.length-1] >= vs[0];
+  const col = up ? "#4cd7a5" : "#f0645a";
+  ctx.beginPath();
+  vs.forEach((v,i)=>{ const x=X(i), y=Y(v); i?ctx.lineTo(x,y):ctx.moveTo(x,y); });
+  ctx.strokeStyle=col; ctx.lineWidth=2; ctx.stroke();
+  ctx.lineTo(X(vs.length-1),H); ctx.lineTo(X(0),H); ctx.closePath();
+  const gr = ctx.createLinearGradient(0,0,0,H);
+  gr.addColorStop(0,col+"33"); gr.addColorStop(1,col+"00");
+  ctx.fillStyle=gr; ctx.fill();
+  const hi = Math.max(...vs), lo = Math.min(...vs);
+  $("histinfo").textContent = `최고 ${num(hi)} · 현재 ${num(vs[vs.length-1])} · 최저 ${num(lo)}`;
+}
+window.addEventListener("resize", drawHist);
+
+// ── 랭킹
+async function loadRanks(){
+  try {
+    const mk = (rows, key, fmt) => rows.slice(0,5).map((r,i)=>`
+      <div class="rkrow ${USER&&r.uid===USER.uid?"me":""}">
+        <span class="rank">${i<3?["🥇","🥈","🥉"][i]:i+1}</span>
+        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${(r.nick||"익명").replace(/</g,"&lt;")}</span>
+        <span class="num" style="color:var(--gold);font-weight:800;">${fmt(r[key])}</span>
+      </div>`).join("") || `<div style="font-size:12px;color:var(--dim);">첫 참가자가 되어보세요!</div>`;
+    const s1 = await db().collection(COL).orderBy("ret","desc").limit(20).get();
+    const r1 = []; s1.forEach(d=>{ const v=d.data(); if(v.total!=null) r1.push({uid:d.id,...v}); });
+    const e1 = $("rank1"); if (e1) e1.innerHTML = mk(r1, "ret", v=>(v>=0?"+":"")+Number(v).toFixed(2)+"%");
+    const s2 = await db().collection(COL).orderBy("total","desc").limit(20).get();
+    const r2 = []; s2.forEach(d=>{ const v=d.data(); if(v.total!=null) r2.push({uid:d.id,...v}); });
+    const e2 = $("rank2"); if (e2) e2.innerHTML = mk(r2, "total", v=>num(v)+"원");
+  } catch(e){
+    const e1=$("rank1"), e2=$("rank2");
+    if(e1) e1.innerHTML = `<div style="font-size:12px;color:var(--dim);">랭킹을 불러오지 못했습니다.</div>`;
+    if(e2) e2.innerHTML = "";
+  }
+}
+
+// 30초 시세 갱신 (화면 재계산 · 입력/팝업 중에는 건너뜀)
+setInterval(async ()=>{
+  if (!USER || !G) return;
+  const ae = document.activeElement;
+  if (ae && (ae.tagName==="INPUT" || ae.tagName==="SELECT")) return;
+  if ($("cfmodal") && $("cfmodal").style.display==="flex") return;
+  try { await loadPrices(); render(); } catch(e){}
+}, 30000);
+</script>
+</body>
+</html>

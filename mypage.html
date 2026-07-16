@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TierBit — 마이페이지</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27><rect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%230a1a22%27/><rect x=%276%27 y=%2716%27 width=%275%27 height=%2710%27 rx=%272%27 fill=%27%234cd7a5%27/><rect x=%2713.5%27 y=%279%27 width=%275%27 height=%2717%27 rx=%272%27 fill=%27%23f0c948%27/><rect x=%2721%27 y=%2712%27 width=%275%27 height=%2714%27 rx=%272%27 fill=%27%234cd7a5%27/></svg>">
+<style>
+  :root {
+    --bg:#0a1620; --panel:#10231c; --panel2:#0d2733; --border:#1c3a33;
+    --text:#e8f4f8; --muted:#9db8a9; --dim:#5a737d;
+    --gold:#f0c948; --gold-dim:#c9a832; --up:#4cd7a5; --down:#f0645a;
+  }
+  * { margin:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",-apple-system,sans-serif; font-size:14px; }
+  a { color:inherit; text-decoration:none; }
+  .num { font-variant-numeric:tabular-nums; }
+  .up { color:var(--up); } .down { color:var(--down); } .flat { color:var(--muted); }
+  .nav { display:flex; align-items:center; gap:14px; padding:13px 22px; border-bottom:1px solid var(--border); background:#0a1a22; position:sticky; top:0; z-index:100; flex-wrap:wrap; }
+  .brand { display:flex; align-items:center; gap:9px; font-size:20px; font-weight:800; letter-spacing:.3px; }
+  .brand .mark { display:flex; align-items:flex-end; gap:2px; height:20px; }
+  .brand .mark i { display:block; width:5px; border-radius:2px; background:var(--gold); }
+  .brand .mark i:nth-child(1){height:10px;background:var(--up);} .brand .mark i:nth-child(2){height:16px;} .brand .mark i:nth-child(3){height:13px;background:var(--up);}
+  .nlink { font-size:13px; font-weight:700; color:var(--muted); padding:6px 10px; border-radius:8px; }
+  .nlink:hover { color:var(--text); background:#ffffff0d; }
+  .nlink.on { color:var(--gold); }
+  #loginbtn { margin-left:auto; background:transparent; border:1px solid var(--border); color:var(--muted); border-radius:9px; padding:7px 15px; font-size:12px; font-weight:800; cursor:pointer; }
+  .wrap { max-width:980px; margin:0 auto; padding:22px 18px 30px; }
+  .page-title { font-size:26px; font-weight:800; margin-bottom:18px; }
+  .card { background:var(--panel); border:1px solid var(--border); border-radius:16px; padding:18px 20px; min-width:0; }
+  .card h3 { font-size:14.5px; font-weight:800; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+  .g2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:14px; }
+  @media (max-width:760px){ .g2 { grid-template-columns:1fr; } }
+  .profile { display:flex; align-items:center; gap:16px; }
+  .avatar { width:64px; height:64px; border-radius:50%; background:linear-gradient(135deg,#13322a,#1d4a3a); border:2px solid #2e5c47; display:flex; align-items:center; justify-content:center; font-size:26px; font-weight:800; color:#4cd7a5; flex-shrink:0; overflow:hidden; }
+  .avatar img { width:100%; height:100%; object-fit:cover; }
+  .smrow { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:9px 2px; border-bottom:1px solid #ffffff0d; font-size:12.5px; }
+  .smrow:last-child { border-bottom:none; }
+  .smrow .k { color:var(--muted); font-weight:600; }
+  .smrow b { font-variant-numeric:tabular-nums; }
+  .tierbadge { display:inline-flex; align-items:center; gap:6px; padding:4px 12px; border-radius:9px; font-size:12px; font-weight:800; }
+  .gamelink { display:block; text-align:center; margin-top:12px; font-size:11.5px; font-weight:800; color:var(--muted); border:1px solid var(--border); border-radius:9px; padding:8px; }
+  .gamelink:hover { color:var(--gold); border-color:var(--gold-dim); }
+  .outbtn { width:100%; margin-top:14px; padding:11px; border-radius:10px; border:1px solid #7a2822; background:transparent; color:#f0708a; font-size:13px; font-weight:800; cursor:pointer; }
+  .outbtn:hover { background:#3a1a2244; }
+  .footer { max-width:980px; margin:18px auto 0; padding:15px 18px 26px; font-size:11.5px; color:var(--muted); border-top:1px solid var(--border); line-height:2.0; text-align:center; }
+  .modal { position:fixed; inset:0; background:#000000aa; display:none; align-items:center; justify-content:center; z-index:300; }
+  .modal .pn { background:var(--panel); border:1px solid var(--border); border-radius:16px; width:min(360px,92vw); padding:24px; }
+</style>
+</head>
+<body>
+<nav class="nav">
+  <a class="brand" href="index.html"><span class="mark"><i></i><i></i><i></i></span>TierBit</a>
+  <a class="nlink" href="index.html">홈</a>
+  <a class="nlink" href="chart.html">차트</a>
+  <a class="nlink" href="predict.html">예측게임</a>
+  <a class="nlink" href="attend.html">출석체크</a>
+  <a class="nlink" href="league.html">리그</a>
+  <a class="nlink on" href="mypage.html">마이페이지</a>
+  <button id="loginbtn">로그인</button>
+</nav>
+<div class="wrap">
+  <div class="page-title">👤 마이페이지</div>
+  <div id="body"><div class="card" style="text-align:center;padding:40px;color:var(--muted);">로그인 상태 확인 중...</div></div>
+  <div class="footer">© 2026 TierBit. All rights reserved.</div>
+</div>
+
+<div class="modal" id="loginmodal">
+  <div class="pn">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <b style="font-size:16px;">로그인</b><span style="cursor:pointer;color:var(--muted);padding:2px 6px;" onclick="document.getElementById('loginmodal').style.display='none'">✕</span></div>
+    <button id="googlelogin" style="width:100%;padding:11px;border-radius:10px;border:1px solid var(--border);background:#fff;color:#1a1a1a;font-weight:800;font-size:13px;cursor:pointer;">Google 계정으로 로그인</button>
+    <div style="display:flex;align-items:center;gap:10px;margin:14px 0;color:var(--dim);font-size:11px;"><span style="flex:1;height:1px;background:var(--border);"></span>또는<span style="flex:1;height:1px;background:var(--border);"></span></div>
+    <input id="lmemail" type="email" placeholder="이메일" autocomplete="username" style="width:100%;padding:10px 12px;margin-bottom:8px;border-radius:9px;border:1px solid var(--border);background:var(--panel2);color:var(--text);outline:none;font-size:13px;">
+    <input id="lmpw" type="password" placeholder="비밀번호" autocomplete="current-password" style="width:100%;padding:10px 12px;border-radius:9px;border:1px solid var(--border);background:var(--panel2);color:var(--text);outline:none;font-size:13px;">
+    <button id="emaillogin" style="width:100%;padding:11px;border-radius:10px;border:none;background:#1d9e75;color:#fff;font-weight:800;font-size:13px;cursor:pointer;margin-top:10px;">이메일로 로그인</button>
+    <div id="lmerr" style="color:#f0708a;font-size:11.5px;margin-top:8px;min-height:15px;"></div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const num = v => Math.round(v).toLocaleString("ko-KR");
+
+firebase.initializeApp({
+  apiKey: "AIzaSyAWwuhXh_maZB5mmsmuKU82XgCMAxEUzVE",
+  authDomain: "stocktier-10c96.firebaseapp.com",
+  projectId: "stocktier-10c96",
+});
+const db = () => firebase.firestore();
+let USER = null, ready = false;
+
+const AUTH_ERR = {
+  "auth/invalid-credential":"이메일 또는 비밀번호가 올바르지 않습니다.","auth/invalid-email":"이메일 형식이 올바르지 않습니다.",
+  "auth/user-not-found":"등록되지 않은 계정입니다.","auth/wrong-password":"비밀번호가 올바르지 않습니다.",
+  "auth/too-many-requests":"시도가 너무 많습니다. 잠시 후 다시 해주세요.","auth/popup-closed-by-user":"로그인 창이 닫혔습니다.",
+};
+const lmerr = m => $("lmerr").textContent = m || "";
+$("loginbtn").addEventListener("click", ()=>{
+  if (USER){ if (confirm("로그아웃할까요?")) firebase.auth().signOut(); }
+  else $("loginmodal").style.display = "flex";
+});
+$("loginmodal").addEventListener("click", e=>{ if(e.target===$("loginmodal")) $("loginmodal").style.display="none"; });
+$("googlelogin").addEventListener("click", ()=>{
+  lmerr("");
+  firebase.auth().signInWithPopup(new firebase.auth.GoogleAuthProvider())
+    .then(()=>$("loginmodal").style.display="none")
+    .catch(e=>lmerr(AUTH_ERR[e.code]||"로그인에 실패했습니다."));
+});
+const doEmail = () => {
+  lmerr("");
+  firebase.auth().signInWithEmailAndPassword($("lmemail").value.trim(), $("lmpw").value)
+    .then(()=>$("loginmodal").style.display="none")
+    .catch(e=>lmerr(AUTH_ERR[e.code]||"로그인에 실패했습니다."));
+};
+$("emaillogin").addEventListener("click", doEmail);
+$("lmpw").addEventListener("keydown", e=>{ if(e.key==="Enter") doEmail(); });
+firebase.auth().onAuthStateChanged(u => {
+  ready = true; USER = u;
+  $("loginbtn").textContent = u ? (u.displayName || u.email.split("@")[0]) + " ▾" : "로그인";
+  $("loginbtn").style.borderColor = u ? "var(--gold-dim)" : "";
+  $("loginbtn").style.color = u ? "var(--gold)" : "";
+  load();
+});
+setTimeout(()=>{ if(!ready) locked(); }, 4000);
+
+const box = $("body");
+function locked(){
+  box.innerHTML = `<div class="card" style="text-align:center;padding:50px;">
+    <div style="font-size:28px;margin-bottom:12px;">🔒</div>
+    <div style="font-size:15px;font-weight:800;margin-bottom:6px;">로그인이 필요합니다</div>
+    <div style="font-size:12px;color:var(--dim);margin-bottom:16px;">게임 기록·포인트·리그 현황을 한눈에 볼 수 있어요.</div>
+    <button style="background:transparent;border:1px solid var(--gold-dim);color:var(--gold);border-radius:9px;padding:10px 26px;font-size:13px;font-weight:800;cursor:pointer;" onclick="document.getElementById('loginmodal').style.display='flex'">로그인하기</button></div>`;
+}
+
+const TIERS = [["챌린저",50,"#ffcc00"],["마스터",30,"#c77dff"],["다이아",15,"#4cc4ff"],["플래티넘",7,"#4cd7a5"],["골드",3,"#f0c948"],["실버",0,"#c0ccd4"],["브론즈",-10,"#c98a5a"],["아이언",-101,"#8a8f94"]];
+const tierOf = ret => TIERS.find(t=>ret>=t[1]) || TIERS[TIERS.length-1];
+
+async function load(){
+  if (!USER){ locked(); return; }
+  try {
+    const [gs, ls] = await Promise.all([
+      db().collection("coin_games").doc(USER.uid).get(),
+      db().collection("coin_league").doc(USER.uid).get(),
+    ]);
+    const g = gs.exists ? gs.data() : {};
+    const l = ls.exists ? ls.data() : null;
+    const nick = USER.displayName || USER.email.split("@")[0];
+    const rate = g.total ? Math.round((g.hit||0)/g.total*100) : 0;
+    const tier = l ? tierOf(l.ret||0) : null;
+
+    box.innerHTML = `
+    <div class="card">
+      <div class="profile">
+        <div class="avatar">${USER.photoURL?`<img src="${USER.photoURL}" alt="">`:nick.slice(0,1).toUpperCase()}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:18px;font-weight:800;">${nick}</div>
+          <div style="font-size:12px;color:var(--dim);margin-top:3px;overflow:hidden;text-overflow:ellipsis;">${USER.email||""}</div>
+        </div>
+        ${tier?`<span class="tierbadge" style="background:${tier[2]}22;color:${tier[2]};border:1px solid ${tier[2]}55;">🛡 ${tier[0]}</span>`:""}
+      </div>
+    </div>
+    <div class="g2">
+      <div class="card"><h3>🎯 예측 게임 전적</h3>
+        <div class="smrow"><span class="k">누적 적중률</span><b style="color:${rate>=60?"#6bbf9c":rate>=40?"#e0c064":"var(--text)"};">${rate}%</b></div>
+        <div class="smrow"><span class="k">적중 / 전체</span><b>${g.hit||0} / ${g.total||0}</b></div>
+        <div class="smrow"><span class="k">현재 연속 적중</span><b>🔥 ${g.pstreak||0}연속</b></div>
+        <div class="smrow"><span class="k">최고 연속 기록</span><b>${g.pbest||0}연속</b></div>
+        <a class="gamelink" href="predict.html">오늘의 예측하러 가기 →</a>
+      </div>
+      <div class="card"><h3>🔥 출석 현황</h3>
+        <div class="smrow"><span class="k">연속 출석</span><b>${g.streak||0}일</b></div>
+        <div class="smrow"><span class="k">최고 기록</span><b>${g.best||0}일</b></div>
+        <div class="smrow"><span class="k">출석 포인트</span><b style="color:var(--gold);">${(g.pts||0).toLocaleString("ko-KR")}P</b></div>
+        <div class="smrow"><span class="k">다음 달 리그 지급금</span><b class="num">${num(20000000+(g.pts||0)*1000000)}원</b></div>
+        <a class="gamelink" href="attend.html">출석 체크 하러 가기 →</a>
+      </div>
+      <div class="card"><h3>🏆 모의투자 리그</h3>
+        ${l?`
+        <div class="smrow"><span class="k">총자산</span><b>${num(l.total||0)}원</b></div>
+        <div class="smrow"><span class="k">누적 수익률</span><b class="${(l.ret||0)>0?"up":(l.ret||0)<0?"down":"flat"}">${(l.ret||0)>=0?"+":""}${Number(l.ret||0).toFixed(2)}%</b></div>
+        <div class="smrow"><span class="k">보유 현금</span><b>${num(l.cash||0)}원</b></div>
+        <div class="smrow"><span class="k">누적 지급금</span><b>${num(l.paid||0)}원</b></div>
+        <a class="gamelink" href="league.html">리그 참가하러 가기 →</a>`
+        :`<div style="font-size:12px;color:var(--dim);padding:8px 0;">아직 리그에 참가하지 않았어요. 첫 접속 시 가상 자금이 자동 지급됩니다.</div>
+        <a class="gamelink" href="league.html">리그 시작하기 →</a>`}
+      </div>
+      <div class="card"><h3>⚙ 계정</h3>
+        <div class="smrow"><span class="k">로그인 방식</span><b>${(USER.providerData&&USER.providerData[0]&&USER.providerData[0].providerId==="google.com")?"Google":"이메일"}</b></div>
+        <div class="smrow"><span class="k">가입 데이터</span><b>예측·출석·리그 기록 (계정 연동)</b></div>
+        <div style="font-size:10.5px;color:var(--dim);margin-top:9px;line-height:1.8;">게임 데이터는 이 계정에 저장되어 어느 기기에서든 이어집니다. 포인트·가상 자금은 현금 가치가 없습니다.</div>
+        <button class="outbtn" onclick="if(confirm('로그아웃할까요?'))firebase.auth().signOut()">로그아웃</button>
+      </div>
+    </div>`;
+  } catch(e){
+    box.innerHTML = `<div class="card" style="text-align:center;padding:40px;color:#f0a0b0;">불러오기에 실패했습니다: ${String(e.message||e).slice(0,100)}</div>`;
+  }
+}
+</script>
+</body>
+</html>
