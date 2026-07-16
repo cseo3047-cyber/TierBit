@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TierBit — 차트</title>
+<style>
+  :root {
+    --bg:#0a1620; --panel:#10231c; --panel2:#0d2733; --border:#1c3a33;
+    --text:#e8f4f8; --muted:#9db8a9; --dim:#5a737d;
+    --gold:#f0c948; --gold-dim:#c9a832; --up:#4cd7a5; --down:#f0645a;
+  }
+  * { margin:0; box-sizing:border-box; }
+  html,body { height:100%; }
+  body { background:var(--bg); color:var(--text); font-family:"Pretendard","Apple SD Gothic Neo","Malgun Gothic",-apple-system,sans-serif; font-size:14px; display:flex; flex-direction:column; }
+  a { color:inherit; text-decoration:none; }
+  .up { color:var(--up); } .down { color:var(--down); } .flat { color:var(--muted); }
+  .nav { display:flex; align-items:center; gap:14px; padding:13px 22px; border-bottom:1px solid var(--border); background:#0a1a22; flex-shrink:0; }
+  .brand { display:flex; align-items:center; gap:9px; font-size:20px; font-weight:800; letter-spacing:.3px; }
+  .brand .mark { display:flex; align-items:flex-end; gap:2px; height:20px; }
+  .brand .mark i { display:block; width:5px; border-radius:2px; background:var(--gold); }
+  .brand .mark i:nth-child(1){height:10px;background:var(--up);} .brand .mark i:nth-child(2){height:16px;} .brand .mark i:nth-child(3){height:13px;background:var(--up);}
+  .nlink { font-size:13px; font-weight:700; color:var(--muted); padding:6px 10px; border-radius:8px; }
+  .nlink:hover { color:var(--text); background:#ffffff0d; }
+  .nlink.on { color:var(--gold); }
+  .main { flex:1; min-height:0; display:flex; }
+  .side { width:230px; flex-shrink:0; border-right:1px solid var(--border); display:flex; flex-direction:column; background:#0b1c26; }
+  @media (max-width:760px){ .side { display:none; } }
+  .side .sbox { padding:10px; border-bottom:1px solid var(--border); }
+  .side input { width:100%; padding:8px 11px; font-size:12px; background:var(--panel2); border:1.5px solid var(--border); border-radius:9px; color:var(--text); outline:none; }
+  .side input:focus { border-color:var(--gold-dim); }
+  .clist { flex:1; overflow-y:auto; }
+  .crow { display:flex; align-items:center; gap:8px; padding:9px 12px; cursor:pointer; border-bottom:1px solid #ffffff08; font-size:12px; }
+  .crow:hover { background:#4cd7a512; }
+  .crow.on { background:#13322a; }
+  .crow .n { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:700; }
+  .crow .s { color:var(--dim); font-size:10px; font-weight:600; }
+  .crow .c { font-size:11px; font-weight:800; font-variant-numeric:tabular-nums; }
+  .cmain { flex:1; min-width:0; display:flex; flex-direction:column; padding:12px 16px 14px; }
+  .chead { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:8px; }
+  .chead b.t { font-size:16px; font-weight:800; }
+  #legend { color:var(--muted); font-variant-numeric:tabular-nums; font-size:11.5px; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  #legend b { font-weight:800; }
+  .tfchips { display:flex; gap:4px; flex-shrink:0; flex-wrap:wrap; }
+  .tfchips span { cursor:pointer; font-size:10.5px; font-weight:800; padding:5px 11px; border-radius:7px; border:1px solid var(--border); color:var(--muted); }
+  .tfchips span.on { background:#13322a; color:#4cd7a5; border-color:#2e5c47; }
+  .tfchips span.gold.on { background:#3d3313; color:var(--gold); border-color:#6b5a1e; }
+  .upbtn { background:transparent; border:1px solid var(--gold-dim); color:var(--gold); border-radius:8px; padding:5px 13px; font-size:11px; font-weight:800; cursor:pointer; flex-shrink:0; }
+  #cvbody { flex:1; min-height:0; position:relative; }
+  #ccv { width:100%; height:100%; display:block; cursor:crosshair; }
+  .note { font-size:10.5px; color:var(--dim); margin-top:7px; text-align:center; }
+</style>
+</head>
+<body>
+<nav class="nav">
+  <a class="brand" href="index.html"><span class="mark"><i></i><i></i><i></i></span>TierBit</a>
+  <a class="nlink" href="index.html">홈</a>
+  <a class="nlink on" href="chart.html">차트</a>
+</nav>
+<div class="main">
+  <div class="side">
+    <div class="sbox"><input id="q" placeholder="코인명 · 심볼 검색" autocomplete="off"></div>
+    <div class="clist" id="clist"></div>
+  </div>
+  <div class="cmain">
+    <div class="chead">
+      <b class="t" id="cvt"></b>
+      <span id="legend"></span>
+      <span class="tfchips" id="tfchips"></span>
+      <button class="upbtn" id="dtbtn" onclick="location.href='coin.html?c='+encodeURIComponent(CUR)" style="color:var(--up);border-color:#2e5c47;">코인 상세 →</button>
+      <button class="upbtn" onclick="window.open('https://upbit.com/exchange?code=CRIX.UPBIT.'+CUR,'_blank')">업비트 ↗</button>
+    </div>
+    <div id="cvbody"><canvas id="ccv"></canvas></div>
+    <div class="note" id="note">일봉·주봉은 업비트 상장 이후 전체, [전체] 탭은 글로벌 데이터로 최장 2010년부터 표시됩니다 · 휠 확대 / 드래그 이동</div>
+  </div>
+</div>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const num = v => Math.round(v).toLocaleString("ko-KR");
+const pfmt = p => p==null ? "-" : p >= 100 ? num(p) : p >= 1 ? p.toLocaleString("ko-KR",{minimumFractionDigits:2,maximumFractionDigits:2}) : p.toLocaleString("ko-KR",{minimumFractionDigits:4,maximumFractionDigits:4});
+async function jget(url){ const r = await fetch(url); if(!r.ok) throw new Error(url+" "+r.status); return r.json(); }
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+
+let CUR = new URLSearchParams(location.search).get("c") || "KRW-BTC";
+let NAMES = {}, LIST = [], Q = "";
+
+// ── 사이드바: 코인 목록 (거래대금 순)
+async function loadSide(){
+  try {
+    const all = await jget("https://api.upbit.com/v1/market/all?isDetails=false");
+    const krw = all.filter(m=>m.market.startsWith("KRW-"));
+    krw.forEach(m=>NAMES[m.market]=m.korean_name);
+    const mkts = krw.map(m=>m.market);
+    const ts = [];
+    for (let i=0; i<mkts.length; i+=99)
+      ts.push(...await jget("https://api.upbit.com/v1/ticker?markets="+mkts.slice(i,i+99).join(",")));
+    LIST = ts.map(t=>({ m:t.market, nm:NAMES[t.market]||t.market, sy:t.market.replace("KRW-",""), chg:(t.signed_change_rate||0)*100, amt:t.acc_trade_price_24h||0 }))
+             .sort((a,b)=>b.amt-a.amt);
+    drawSide();
+    setTitle();
+  } catch(e){ /* 사이드바 실패해도 차트는 동작 */ }
+}
+function drawSide(){
+  let p = LIST;
+  if (Q){ const qU=Q.toUpperCase(); p = p.filter(r=>r.nm.includes(Q)||r.sy.includes(qU)); }
+  $("clist").innerHTML = p.slice(0,80).map(r=>
+    `<div class="crow ${r.m===CUR?"on":""}" onclick="pick('${r.m}')">
+      <span class="n">${r.nm} <span class="s">${r.sy}</span></span>
+      <span class="c ${r.chg>0?"up":r.chg<0?"down":"flat"}">${r.chg>=0?"+":""}${r.chg.toFixed(2)}%</span>
+    </div>`).join("") || `<div style="padding:16px;font-size:12px;color:var(--dim);">검색 결과 없음</div>`;
+}
+$("q").addEventListener("input", e=>{ Q=e.target.value.trim(); drawSide(); });
+window.pick = m => { CUR=m; setTitle(); drawSide(); loadCandles(); history.replaceState(null,"","chart.html?c="+encodeURIComponent(m)); };
+function setTitle(){
+  const nm = NAMES[CUR]||CUR;
+  $("cvt").innerHTML = nm + ` <span style="font-size:11px;color:var(--dim);font-weight:600;">${CUR.replace("KRW-","")}</span>`;
+  document.title = "TierBit — " + nm + " 차트";
+}
+
+// ══════════ 데이터 로딩 ══════════
+// 일봉·주봉: 업비트 상장 이후 전체 (페이지네이션) / 월봉: 200개 / 전체: CryptoCompare(최장 2010~)
+const TFS = [
+  ["15분","m15"],["60분","m60"],["일봉","day"],["주봉","week"],["월봉","month"],["전체","full"]
+];
+let SEQ = 0; // 요청 경합 방지
+
+async function upbitPages(path, maxPages){
+  // 업비트 캔들 페이지네이션: to=가장 오래된 봉 시각(UTC) 으로 거슬러 올라감
+  let out = [], to = "";
+  for (let i=0; i<maxPages; i++){
+    const rows = await jget(`https://api.upbit.com/v1/candles/${path}?market=${CUR}&count=200${to?"&to="+encodeURIComponent(to):""}`);
+    if (!rows.length) break;
+    out = out.concat(rows);
+    if (rows.length < 200) break;
+    to = rows[rows.length-1].candle_date_time_utc;
+    await sleep(120);
+  }
+  return out.reverse().map(c=>({
+    d: String(c.candle_date_time_kst||""),
+    o:+c.opening_price, h:+c.high_price, l:+c.low_price, c:+c.trade_price,
+    v:+(c.candle_acc_trade_volume||0)
+  })).filter(b=>b.c>0);
+}
+async function ccFull(){
+  // CryptoCompare: 상장 이전 포함 전체 일봉 (KRW 환산) — BTC는 2010년부터
+  const sym = CUR.replace("KRW-","");
+  const j = await jget(`https://min-api.cryptocompare.com/data/v2/histoday?fsym=${sym}&tsym=KRW&allData=true`);
+  if (j.Response!=="Success" || !j.Data || !j.Data.Data) throw new Error("cc fail");
+  const bars = j.Data.Data.map(c=>{
+    const dt = new Date(c.time*1000);
+    const iso = dt.getFullYear()+"-"+String(dt.getMonth()+1).padStart(2,"0")+"-"+String(dt.getDate()).padStart(2,"0");
+    return { d: iso+"T00:00:00", o:+c.open, h:+c.high, l:+c.low, c:+c.close, v:+(c.volumeto||0) };
+  }).filter(b=>b.c>0 && b.h>0 && b.o>0 && b.l>0);
+  if (bars.length < 30) throw new Error("cc short");
+  return bars;
+}
+async function loadCandles(){
+  const seq = ++SEQ;
+  drawTfChips();
+  $("legend").textContent = "불러오는 중…";
+  $("note").textContent = "";
+  try {
+    let bars, note = "";
+    if (CV.tf==="m15")       bars = await upbitPages("minutes/15", 2);
+    else if (CV.tf==="m60")  bars = await upbitPages("minutes/60", 2);
+    else if (CV.tf==="day")  { bars = await upbitPages("days", 40);  note = "업비트 상장 이후 일봉 전체 ("+bars.length.toLocaleString()+"개)"; }
+    else if (CV.tf==="week") { bars = await upbitPages("weeks", 4);  note = "업비트 상장 이후 주봉 전체"; }
+    else if (CV.tf==="month"){ bars = await upbitPages("months", 1); note = "월봉"; }
+    else { // 전체 (최장)
+      try { bars = await ccFull(); note = "글로벌 일봉 · "+bars[0].d.slice(0,10).replaceAll("-",".")+"부터 ("+bars.length.toLocaleString()+"개, CryptoCompare 원화 환산)"; }
+      catch(e){ bars = await upbitPages("days", 40); note = "해외 데이터를 못 가져와 업비트 상장 이후 전체로 표시합니다"; }
+    }
+    if (seq !== SEQ) return; // 다른 요청이 이미 시작됨
+    CV.bars = bars;
+    CV.i1 = bars.length-1;
+    CV.i0 = CV.tf==="full"||CV.tf==="day" ? 0 : Math.max(0, bars.length-130); // 긴 데이터는 전체 표시로 시작
+    if (CV.tf==="day" && bars.length>800) CV.i0 = 0;
+    CV.hover = -1;
+    $("note").textContent = (note?note+" · ":"") + "휠 확대 / 드래그 이동";
+    cvResize();
+  } catch(e){ if (seq===SEQ) $("legend").textContent = "차트를 불러오지 못했습니다. ("+String(e.message||e).slice(0,60)+")"; }
+}
+window.setTf = tf => { CV.tf = tf; loadCandles(); };
+function drawTfChips(){
+  $("tfchips").innerHTML = TFS.map(([lb,k])=>`<span class="${k==="full"?"gold ":""}${CV.tf===k?"on":""}" onclick="setTf('${k}')">${lb}</span>`).join("");
+}
+
+// ══════════ 캔들 엔진 ══════════
+const CV = { tf:"day", bars:null, i0:0, i1:0, hover:-1, hy:null, drag:null };
+const AXW=78, AXH=20, VOLR=0.20, MAS=[[5,"#f0c948"],[20,"#4cc4ff"],[60,"#c77dff"]];
+const ccv = $("ccv"), cctx = ccv.getContext("2d");
+function cvResize(){
+  const w = ccv.clientWidth, h = ccv.clientHeight, dpr = window.devicePixelRatio||1;
+  if (!w||!h) return;
+  ccv.width = Math.round(w*dpr); ccv.height = Math.round(h*dpr);
+  cctx.setTransform(dpr,0,0,dpr,0,0);
+  drawCV();
+}
+window.addEventListener("resize", cvResize);
+const smaAt=(b,n,i)=>{ if(i+1<n) return null; let s=0; for(let k=i-n+1;k<=i;k++) s+=b[k].c; return s/n; };
+function rr(x,y,w,h,r){ cctx.beginPath(); cctx.moveTo(x+r,y); cctx.arcTo(x+w,y,x+w,y+h,r); cctx.arcTo(x+w,y+h,x,y+h,r); cctx.arcTo(x,y+h,x,y,r); cctx.arcTo(x,y,x+w,y,r); cctx.closePath(); }
+function dlab(d){
+  if (CV.tf==="m15"||CV.tf==="m60") return d.slice(5,10).replace("-","/")+" "+d.slice(11,16);
+  const span = CV.i1-CV.i0;
+  if (span>700) return d.slice(0,7).replace("-","/");        // 2018/05
+  if (span>200) return "'"+d.slice(2,7).replace("-","/");    // '18/05
+  return d.slice(5,10).replace("-","/");                     // 05/17
+}
+function drawCV(){
+  if (!CV.bars || !CV.bars.length) return;
+  const W=ccv.clientWidth, H=ccv.clientHeight;
+  cctx.clearRect(0,0,W,H);
+  const bars=CV.bars, i0=CV.i0, i1=CV.i1, n=i1-i0+1;
+  const plotW=W-AXW, priceH=(H-AXH)*(1-VOLR)-6, volTop=priceH+10, volH=(H-AXH)-volTop-4;
+  let mn=Infinity,mx=-Infinity,vmax=0;
+  for(let i=i0;i<=i1;i++){ const b=bars[i]; if(b.l<mn)mn=b.l; if(b.h>mx)mx=b.h; if(b.v>vmax)vmax=b.v; }
+  const pad=(mx-mn)*0.06||mx*0.01||1; mn-=pad; mx+=pad;
+  const X=i=>(i-i0+0.5)/n*plotW, Y=v=>(1-(v-mn)/(mx-mn))*priceH+4;
+  const bw=Math.max(1,Math.min(17,plotW/n*0.66));
+  cctx.font="10px -apple-system,sans-serif"; cctx.textAlign="left"; cctx.lineWidth=1;
+  for(let g=0;g<=4;g++){ const v=mn+(mx-mn)*g/4, y=Y(v);
+    cctx.strokeStyle="#12303a"; cctx.beginPath(); cctx.moveTo(0,y); cctx.lineTo(plotW,y); cctx.stroke();
+    cctx.fillStyle="#5a737d"; cctx.fillText(pfmt(v), plotW+6, y+3.5); }
+  const step=Math.max(1,Math.ceil(n/(plotW/104)));
+  cctx.textAlign="center";
+  for(let i=i0;i<=i1;i+=step){ const x=X(i);
+    cctx.strokeStyle="#0f2733"; cctx.beginPath(); cctx.moveTo(x,4); cctx.lineTo(x,H-AXH); cctx.stroke();
+    cctx.fillStyle="#5a737d"; cctx.fillText(dlab(bars[i].d), x, H-6); }
+  cctx.textAlign="left";
+  for(let i=i0;i<=i1;i++){ const b=bars[i];
+    cctx.fillStyle=b.c>=b.o?"#4cd7a544":"#f0645a44";
+    const vh=vmax?b.v/vmax*volH:0;
+    cctx.fillRect(X(i)-bw/2, volTop+volH-vh, bw, Math.max(1,vh)); }
+  for(let i=i0;i<=i1;i++){ const b=bars[i], up=b.c>=b.o, col=up?"#4cd7a5":"#f0645a", x=X(i);
+    cctx.strokeStyle=col; cctx.beginPath(); cctx.moveTo(x,Y(b.h)); cctx.lineTo(x,Y(b.l)); cctx.stroke();
+    cctx.fillStyle=col;
+    const yO=Y(b.o), yC=Y(b.c);
+    cctx.fillRect(x-bw/2, Math.min(yO,yC), bw, Math.max(1,Math.abs(yC-yO))); }
+  if (n<=1200)
+  for(const [nn,col] of MAS){ cctx.strokeStyle=col; cctx.lineWidth=1.3; cctx.beginPath(); let st=false;
+    for(let i=i0;i<=i1;i++){ const v=smaAt(bars,nn,i); if(v==null) continue;
+      const x=X(i),y=Y(v); if(!st){cctx.moveTo(x,y);st=true;} else cctx.lineTo(x,y); }
+    cctx.stroke(); }
+  cctx.lineWidth=1;
+  const last=bars[bars.length-1];
+  if(last.c>=mn&&last.c<=mx){ const y=Y(last.c);
+    cctx.setLineDash([4,4]); cctx.strokeStyle="#f0c948";
+    cctx.beginPath(); cctx.moveTo(0,y); cctx.lineTo(plotW,y); cctx.stroke(); cctx.setLineDash([]);
+    cctx.fillStyle="#f0c948"; rr(plotW+2,y-9,AXW-5,18,4); cctx.fill();
+    cctx.fillStyle="#1a1608"; cctx.font="bold 9.5px -apple-system,sans-serif";
+    cctx.fillText(pfmt(last.c), plotW+7, y+3.5);
+    cctx.font="10px -apple-system,sans-serif"; }
+  if(CV.hover>=i0&&CV.hover<=i1){ const x=X(CV.hover);
+    cctx.setLineDash([4,4]); cctx.strokeStyle="#8da4ac";
+    cctx.beginPath(); cctx.moveTo(x,4); cctx.lineTo(x,H-AXH); cctx.stroke();
+    if(CV.hy!=null&&CV.hy<=priceH+4){ cctx.beginPath(); cctx.moveTo(0,CV.hy); cctx.lineTo(plotW,CV.hy); cctx.stroke();
+      cctx.setLineDash([]);
+      const pv=mn+(1-(CV.hy-4)/priceH)*(mx-mn);
+      cctx.fillStyle="#22303c"; rr(plotW+2,CV.hy-9,AXW-5,18,4); cctx.fill();
+      cctx.fillStyle="#cfe4ec"; cctx.fillText(pfmt(pv), plotW+7, CV.hy+3.5); }
+    cctx.setLineDash([]); }
+  legend(CV.hover>=0?CV.hover:bars.length-1);
+}
+function legend(i){
+  const bars=CV.bars; if(!bars) return;
+  const b=bars[i], p=i>0?bars[i-1].c:b.o;
+  const ch=b.c-p, chp=p?ch/p*100:0, col=ch>=0?"#4cd7a5":"#f0645a";
+  const maStr=MAS.map(([n,c])=>{ const v=smaAt(bars,n,i); return v==null?"":`<span style="color:${c};">MA${n} <b>${pfmt(v)}</b></span>`; }).filter(Boolean).join(" · ");
+  $("legend").innerHTML = `<span style="color:var(--dim);">${b.d.slice(0,10).replaceAll("-",".")}</span>
+    시 <b>${pfmt(b.o)}</b> 고 <b style="color:#4cd7a5;">${pfmt(b.h)}</b> 저 <b style="color:#f0645a;">${pfmt(b.l)}</b>
+    종 <b style="color:${col};">${pfmt(b.c)} (${chp>=0?"+":""}${chp.toFixed(2)}%)</b> ${maStr?"&nbsp;"+maStr:""}`;
+}
+function evP(ev){ const r=ccv.getBoundingClientRect(); return [ev.clientX-r.left, ev.clientY-r.top]; }
+ccv.addEventListener("mousemove", ev=>{
+  if(!CV.bars) return;
+  const [x,y]=evP(ev);
+  const plotW=ccv.clientWidth-AXW, n=CV.i1-CV.i0+1;
+  if(CV.drag){ const shift=Math.round((CV.drag.x-x)/(plotW/n));
+    if(shift!==0){ let i0=CV.drag.i0+shift;
+      i0=Math.max(0,Math.min(CV.bars.length-n,i0)); CV.i0=i0; CV.i1=i0+n-1; } }
+  CV.hover=Math.max(CV.i0,Math.min(CV.i1,CV.i0+Math.floor(x/plotW*n)));
+  CV.hy=y; drawCV();
+});
+ccv.addEventListener("mousedown", ev=>{ const [x]=evP(ev); CV.drag={x,i0:CV.i0}; ccv.style.cursor="grabbing"; });
+window.addEventListener("mouseup", ()=>{ CV.drag=null; ccv.style.cursor="crosshair"; });
+ccv.addEventListener("mouseleave", ()=>{ if(!CV.drag){ CV.hover=-1; CV.hy=null; drawCV(); } });
+ccv.addEventListener("wheel", ev=>{
+  if(!CV.bars) return;
+  ev.preventDefault();
+  const [x]=evP(ev);
+  const plotW=ccv.clientWidth-AXW, span=CV.i1-CV.i0+1;
+  let ns=Math.round(span*(ev.deltaY>0?1.15:1/1.15));
+  ns=Math.max(12,Math.min(CV.bars.length,ns));
+  const r=Math.max(0,Math.min(1,x/plotW));
+  let i0=Math.round(CV.i0+r*span-r*ns);
+  i0=Math.max(0,Math.min(CV.bars.length-ns,i0));
+  CV.i0=i0; CV.i1=i0+ns-1; drawCV();
+},{passive:false});
+ccv.addEventListener("touchstart", ev=>{ if(ev.touches.length===1) CV.drag={x:ev.touches[0].clientX-ccv.getBoundingClientRect().left,i0:CV.i0}; },{passive:true});
+ccv.addEventListener("touchmove", ev=>{
+  if(!CV.bars||!CV.drag||ev.touches.length!==1) return;
+  const x=ev.touches[0].clientX-ccv.getBoundingClientRect().left;
+  const plotW=ccv.clientWidth-AXW, n=CV.i1-CV.i0+1;
+  const shift=Math.round((CV.drag.x-x)/(plotW/n));
+  if(shift!==0){ let i0=CV.drag.i0+shift;
+    i0=Math.max(0,Math.min(CV.bars.length-n,i0)); CV.i0=i0; CV.i1=i0+n-1; drawCV(); }
+},{passive:true});
+ccv.addEventListener("touchend", ()=>{ CV.drag=null; });
+
+setTitle();
+loadSide();
+loadCandles();
+</script>
+</body>
+</html>
