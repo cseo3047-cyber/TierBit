@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TierBit — 출석 체크</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27><rect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%230a1a22%27/><rect x=%276%27 y=%2716%27 width=%275%27 height=%2710%27 rx=%272%27 fill=%27%234cd7a5%27/><rect x=%2713.5%27 y=%279%27 width=%275%27 height=%2717%27 rx=%272%27 fill=%27%23f0c948%27/><rect x=%2721%27 y=%2712%27 width=%275%27 height=%2714%27 rx=%272%27 fill=%27%234cd7a5%27/></svg>">
 <style>
   :root {
     --bg:#0a1620; --panel:#10231c; --panel2:#0d2733; --border:#1c3a33;
@@ -259,67 +260,4 @@ function render(){
       <div class="card"><div id="calbox">${calHtml()}</div></div>
       <div style="display:grid;grid-template-columns:1.25fr 1fr;gap:14px;margin-top:14px;align-items:stretch;flex:1;">
         <div class="card" style="display:flex;flex-direction:column;"><h3>최근 출석 기록</h3>
-          <div style="margin:auto 0;">
-            <div class="tline">${tl}</div>
-            <div style="display:flex;gap:14px;justify-content:center;font-size:10.5px;color:var(--dim);font-weight:700;margin-top:14px;">
-              <span><span style="color:#4cd7a5;">●</span> 출석</span><span><span style="color:var(--border);">●</span> 미출석</span><span><span style="color:var(--gold);">○</span> 오늘</span></div>
-          </div>
-        </div>
-        <div class="card"><h3>출석 혜택 안내</h3>
-          <div class="benrow"><span class="bic">🔥</span><div style="font-size:11.5px;color:var(--muted);line-height:1.7;"><b style="color:var(--text);">연속 출석 보너스</b><br>기본 10P + 연속 하루당 +1P (최대 +20P)</div></div>
-          <div class="benrow"><span class="bic">📅</span><div style="font-size:11.5px;color:var(--muted);line-height:1.7;"><b style="color:var(--text);">월간 보너스</b><br>한 달 10일 출석 시 +30P · 20일 출석 시 +50P</div></div>
-          <div class="benrow"><span class="bic">💰</span><div style="font-size:11.5px;color:var(--muted);line-height:1.7;"><b style="color:var(--text);">모의투자 지원금</b><br>포인트 1P당 매월 지급되는 모의투자 자금 +100만원 (리그 오픈 시)</div></div>
-        </div>
-      </div>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:12px;">
-      <div class="card"><h3>배지 <span class="more">수집 현황 ${BADGES.filter(b=>G.best>=b[0]).length} / ${BADGES.length}</span></h3>
-        ${BADGES.map(([n,ic,lb],i)=>{
-          const got = G.best>=n, pct = Math.min(100,Math.round(G.best/n*100));
-          const cols = [["#f0b24a","#a86a1e"],["#d3dde3","#85939c"],["#f0c948","#b8891e"],["#c77dff","#7a3fb0"]][i];
-          const shield = `<svg viewBox="0 0 40 44" width="34" height="37" style="flex-shrink:0;filter:drop-shadow(0 1px 2px rgba(0,0,0,.45));${got?"":"opacity:.4;"}"><defs><linearGradient id="bg${i}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${cols[0]}"/><stop offset="1" stop-color="${cols[1]}"/></linearGradient></defs><path d="M20 2 L36 8 V22 C36 33 29 40 20 43 C11 40 4 33 4 22 V8 Z" fill="url(#bg${i})" stroke="#ffffff66" stroke-width="1"/><path d="M20 12.5 l2.6 5.3 5.9.6 -4.4 4 1.3 5.8 -5.4-3 -5.4 3 1.3-5.8 -4.4-4 5.9-.6z" fill="#fff" opacity=".92"/></svg>`;
-          return `<div class="badge3">${shield}
-            <div style="flex:1;"><div style="font-size:12px;font-weight:700;">${lb}</div>
-            <div class="pbar" style="margin-top:6px;"><i class="grn" style="width:${pct}%;"></i></div></div>
-            <span style="font-size:10.5px;color:${got?"#4cd7a5":"var(--dim)"};font-weight:700;flex-shrink:0;">${got?"달성!":`${Math.min(G.best,n)} / ${n}`}</span></div>`;}).join("")}
-      </div>
-      <div class="card"><h3>🏆 스트릭 랭킹</h3><div id="ranks">불러오는 중...</div></div>
-      <div class="card"><h3>오늘의 출석 보상</h3>
-        <div style="display:flex;align-items:center;gap:14px;padding:6px 0;">
-          <span class="ic" style="width:46px;height:46px;border-radius:13px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-size:24px;">🪙</span>
-          <div style="flex:1;"><b class="num" style="font-size:22px;color:#f0c948;">${NEWATT?GAINED:0}P</b>
-            <div style="font-size:10.5px;color:var(--dim);">출석 포인트${GBONUS?` · ${GBONUS}`:""}</div></div>
-          <span style="width:62px;height:62px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;text-align:center;font-size:11px;font-weight:900;color:#5c3300;line-height:1.25;background:radial-gradient(circle at 40% 34%,#ffe98a,#e0a020);box-shadow:0 0 14px #f0c94877, inset 0 0 0 2px #ffffff55;">획득<br>완료</span>
-        </div>
-      </div>
-      <div class="card" style="flex:1;"><h3>이번 달 달성률</h3>
-        <b class="num" style="font-size:24px;">${Math.round(mc/daysIn*100)}<span style="font-size:14px;">%</span></b>
-        <span style="font-size:11px;color:var(--dim);font-weight:700;margin-left:8px;">${mc} / ${daysIn}일</span>
-        <div class="pbar" style="margin-top:9px;"><i class="grn" style="width:${Math.round(mc/daysIn*100)}%;"></i></div>
-        <div style="font-size:10.5px;color:var(--muted);font-weight:700;margin-top:10px;">🎁 ${mc<10?`10일 출석 시 +30P 보너스 (${10-mc}일 남음)`:mc<20?`20일 출석 시 +50P 보너스 (${20-mc}일 남음)`:"이번 달 월간 보너스 모두 달성!"}</div>
-      </div>
-    </div>
-  </div>`;
-
-  loadRanks();
-}
-
-async function loadRanks(){
-  const el = $("ranks");
-  if (!el) return;
-  try {
-    const rs = await db().collection(COL).orderBy("streak","desc").limit(20).get();
-    const rows = [];
-    rs.forEach(d => { const v = d.data(); if (v.streak) rows.push({ uid:d.id, ...v }); });
-    el.innerHTML = rows.length ? rows.slice(0,5).map((r,i)=>`
-      <div class="rkrow ${USER&&r.uid===USER.uid?"me":""}">
-        <span class="rank">${i<3?["🥇","🥈","🥉"][i]:i+1}</span>
-        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${(r.nick||"익명").replace(/</g,"&lt;")}</span>
-        <span class="num" style="color:#f0c948;">🔥 ${r.streak}일</span>
-      </div>`).join("")
-    : `<div style="font-size:12px;color:var(--dim);">아직 기록이 없어요.</div>`;
-  } catch(e) { el.innerHTML = `<div style="font-size:12px;color:var(--dim);">랭킹을 불러오지 못했습니다.</div>`; }
-}
-</script>
-</body>
-</html>
+          <div style="margin:aut

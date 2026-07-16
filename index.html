@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TierBit — 코인 티어 랭킹</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27><rect width=%2732%27 height=%2732%27 rx=%277%27 fill=%27%230a1a22%27/><rect x=%276%27 y=%2716%27 width=%275%27 height=%2710%27 rx=%272%27 fill=%27%234cd7a5%27/><rect x=%2713.5%27 y=%279%27 width=%275%27 height=%2717%27 rx=%272%27 fill=%27%23f0c948%27/><rect x=%2721%27 y=%2712%27 width=%275%27 height=%2714%27 rx=%272%27 fill=%27%234cd7a5%27/></svg>">
 <meta name="description" content="업비트 원화마켓 전 코인을 신용등급 방식의 티어(AAA~D)로 한눈에. 실시간 시세 · 김치 프리미엄 · 재미용 코인 랭킹.">
 <style>
   :root {
@@ -206,7 +207,7 @@ async function refresh(first){
   try {
     if (first){
       // 환율(ECB) · 바이낸스 BTC — 김치 프리미엄용 (실패해도 무시)
-      jget("https://api.frankfurter.app/latest?from=USD&to=KRW").then(j=>{ if(j&&j.rates&&j.rates.KRW) FX=j.rates.KRW; drawCards(); }).catch(()=>{});
+      jget("https://api.frankfurter.dev/v1/latest?base=USD&symbols=KRW").then(j=>{ if(j&&j.rates&&j.rates.KRW) FX=j.rates.KRW; drawCards(); }).catch(()=>{});
       window.__mk = await loadMarkets();
     }
     jget("https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT").then(j=>{ BTC_USD=+j.price; drawCards(); }).catch(()=>{});
