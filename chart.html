@@ -69,6 +69,7 @@
     <div class="chead">
       <b class="t" id="cvt"></b>
       <span id="legend"></span>
+      <span class="tfchips" id="curchips" title="표시 통화"></span>
       <span class="tfchips" id="tfchips"></span>
       <button class="upbtn" id="dtbtn" onclick="location.href='coin.html?c='+encodeURIComponent(CUR)" style="color:var(--up);border-color:#2e5c47;">코인 상세 →</button>
       <button class="upbtn" onclick="window.open('https://upbit.com/exchange?code=CRIX.UPBIT.'+CUR,'_blank')">업비트 ↗</button>
@@ -88,6 +89,17 @@ const sleep = ms => new Promise(r=>setTimeout(r,ms));
 
 let CUR = new URLSearchParams(location.search).get("c") || "KRW-BTC";
 let NAMES = {}, LIST = [], Q = "";
+
+// ── 통화 전환 (₩/$) — 달러는 ECB 환율로 환산
+let FX = 1400;
+let CURR = localStorage.getItem("tb_cur") === "usd" ? "usd" : "krw";
+jget("https://api.frankfurter.dev/v1/latest?base=USD&symbols=KRW").then(j=>{ if(j&&j.rates&&j.rates.KRW){ FX=j.rates.KRW; if(CURR==="usd"&&CV.bars) drawCV(); } }).catch(()=>{});
+const usdFmt = u => u >= 100 ? u.toLocaleString("en-US",{maximumFractionDigits:0}) : u >= 1 ? u.toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}) : u.toLocaleString("en-US",{minimumFractionDigits:4,maximumFractionDigits:4});
+const mfmt = p => CURR==="usd" ? "$"+usdFmt(p/FX) : pfmt(p);
+window.setCur = c => { CURR=c; try{localStorage.setItem("tb_cur",c);}catch(e){} drawCurChips(); if(CV.bars) drawCV(); };
+function drawCurChips(){
+  $("curchips").innerHTML = `<span class="${CURR==="krw"?"on":""}" onclick="setCur('krw')">₩</span><span class="${CURR==="usd"?"on":""}" onclick="setCur('usd')">$</span>`;
+}
 
 // ── 사이드바: 코인 목록 (거래대금 순)
 async function loadSide(){
@@ -225,7 +237,7 @@ function drawCV(){
   cctx.font="10px -apple-system,sans-serif"; cctx.textAlign="left"; cctx.lineWidth=1;
   for(let g=0;g<=4;g++){ const v=mn+(mx-mn)*g/4, y=Y(v);
     cctx.strokeStyle="#12303a"; cctx.beginPath(); cctx.moveTo(0,y); cctx.lineTo(plotW,y); cctx.stroke();
-    cctx.fillStyle="#5a737d"; cctx.fillText(pfmt(v), plotW+6, y+3.5); }
+    cctx.fillStyle="#5a737d"; cctx.fillText(mfmt(v), plotW+6, y+3.5); }
   const step=Math.max(1,Math.ceil(n/(plotW/104)));
   cctx.textAlign="center";
   for(let i=i0;i<=i1;i+=step){ const x=X(i);
@@ -253,7 +265,7 @@ function drawCV(){
     cctx.beginPath(); cctx.moveTo(0,y); cctx.lineTo(plotW,y); cctx.stroke(); cctx.setLineDash([]);
     cctx.fillStyle="#f0c948"; rr(plotW+2,y-9,AXW-5,18,4); cctx.fill();
     cctx.fillStyle="#1a1608"; cctx.font="bold 9.5px -apple-system,sans-serif";
-    cctx.fillText(pfmt(last.c), plotW+7, y+3.5);
+    cctx.fillText(mfmt(last.c), plotW+7, y+3.5);
     cctx.font="10px -apple-system,sans-serif"; }
   if(CV.hover>=i0&&CV.hover<=i1){ const x=X(CV.hover);
     cctx.setLineDash([4,4]); cctx.strokeStyle="#8da4ac";
@@ -262,7 +274,7 @@ function drawCV(){
       cctx.setLineDash([]);
       const pv=mn+(1-(CV.hy-4)/priceH)*(mx-mn);
       cctx.fillStyle="#22303c"; rr(plotW+2,CV.hy-9,AXW-5,18,4); cctx.fill();
-      cctx.fillStyle="#cfe4ec"; cctx.fillText(pfmt(pv), plotW+7, CV.hy+3.5); }
+      cctx.fillStyle="#cfe4ec"; cctx.fillText(mfmt(pv), plotW+7, CV.hy+3.5); }
     cctx.setLineDash([]); }
   legend(CV.hover>=0?CV.hover:bars.length-1);
 }
@@ -270,10 +282,10 @@ function legend(i){
   const bars=CV.bars; if(!bars) return;
   const b=bars[i], p=i>0?bars[i-1].c:b.o;
   const ch=b.c-p, chp=p?ch/p*100:0, col=ch>=0?"#4cd7a5":"#f0645a";
-  const maStr=MAS.map(([n,c])=>{ const v=smaAt(bars,n,i); return v==null?"":`<span style="color:${c};">MA${n} <b>${pfmt(v)}</b></span>`; }).filter(Boolean).join(" · ");
+  const maStr=MAS.map(([n,c])=>{ const v=smaAt(bars,n,i); return v==null?"":`<span style="color:${c};">MA${n} <b>${mfmt(v)}</b></span>`; }).filter(Boolean).join(" · ");
   $("legend").innerHTML = `<span style="color:var(--dim);">${b.d.slice(0,10).replaceAll("-",".")}</span>
-    시 <b>${pfmt(b.o)}</b> 고 <b style="color:#4cd7a5;">${pfmt(b.h)}</b> 저 <b style="color:#f0645a;">${pfmt(b.l)}</b>
-    종 <b style="color:${col};">${pfmt(b.c)} (${chp>=0?"+":""}${chp.toFixed(2)}%)</b> ${maStr?"&nbsp;"+maStr:""}`;
+    시 <b>${mfmt(b.o)}</b> 고 <b style="color:#4cd7a5;">${mfmt(b.h)}</b> 저 <b style="color:#f0645a;">${mfmt(b.l)}</b>
+    종 <b style="color:${col};">${mfmt(b.c)} (${chp>=0?"+":""}${chp.toFixed(2)}%)</b> ${maStr?"&nbsp;"+maStr:""}`;
 }
 function evP(ev){ const r=ccv.getBoundingClientRect(); return [ev.clientX-r.left, ev.clientY-r.top]; }
 ccv.addEventListener("mousemove", ev=>{
@@ -299,4 +311,23 @@ ccv.addEventListener("wheel", ev=>{
   const r=Math.max(0,Math.min(1,x/plotW));
   let i0=Math.round(CV.i0+r*span-r*ns);
   i0=Math.max(0,Math.min(CV.bars.length-ns,i0));
-  CV.i0=i0; CV.i1=i0+ns-1; 
+  CV.i0=i0; CV.i1=i0+ns-1; drawCV();
+},{passive:false});
+ccv.addEventListener("touchstart", ev=>{ if(ev.touches.length===1) CV.drag={x:ev.touches[0].clientX-ccv.getBoundingClientRect().left,i0:CV.i0}; },{passive:true});
+ccv.addEventListener("touchmove", ev=>{
+  if(!CV.bars||!CV.drag||ev.touches.length!==1) return;
+  const x=ev.touches[0].clientX-ccv.getBoundingClientRect().left;
+  const plotW=ccv.clientWidth-AXW, n=CV.i1-CV.i0+1;
+  const shift=Math.round((CV.drag.x-x)/(plotW/n));
+  if(shift!==0){ let i0=CV.drag.i0+shift;
+    i0=Math.max(0,Math.min(CV.bars.length-n,i0)); CV.i0=i0; CV.i1=i0+n-1; drawCV(); }
+},{passive:true});
+ccv.addEventListener("touchend", ()=>{ CV.drag=null; });
+
+setTitle();
+drawCurChips();
+loadSide();
+loadCandles();
+</script>
+</body>
+</html>

@@ -315,4 +315,11 @@ ccv.addEventListener("touchmove", ev=>{
   const shift=Math.round((CV.drag.x-x)/(plotW/n));
   if(shift!==0){ let i0=CV.drag.i0+shift;
     i0=Math.max(0,Math.min(CV.bars.length-n,i0)); CV.i0=i0; CV.i1=i0+n-1; drawCV(); }
-},{passi
+},{passive:true});
+ccv.addEventListener("touchend", ()=>{ CV.drag=null; });
+
+load(true).then(loadCandles);
+setInterval(()=>load(false), 30000);
+</script>
+</body>
+</html>
